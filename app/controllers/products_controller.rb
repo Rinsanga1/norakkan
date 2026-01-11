@@ -9,15 +9,15 @@ class ProductsController < ApplicationController
 
   def new
     @product = Product.new
-    @product.variants.build
+    # Don't build empty variant - let user add if needed
   end
 
   def create
     @product = Product.new(product_params)
     if @product.save
-      redirect_to @product
+      redirect_to @product, notice: "Product created successfully."
     else
-      render :new
+      render :new, status: :unprocessable_entity
     end
   end
 
@@ -28,21 +28,32 @@ class ProductsController < ApplicationController
   def update
     @product = Product.find(params[:id])
     if @product.update(product_params)
-      redirect_to @product
+      redirect_to @product, notice: "Product updated successfully."
     else
-      render :edit
+      render :edit, status: :unprocessable_entity
     end
   end
 
   def destroy
     @product = Product.find(params[:id])
     @product.destroy
-    redirect_to products_path
+    redirect_to products_path, notice: "Product deleted successfully."
   end
 
   private
 
   def product_params
-    params.require(:product).permit(:name, :description, :roast_level, :drinking_preference, :flavour_profile, :equipment, :stock, variants_attributes: [:id, :size, :grind, :price, :_destroy])
+    params.require(:product).permit(
+      :name,
+      :description,
+      :roast_level,
+      :drinking_preference,
+      :flavour_profile,
+      :equipment,
+      :stock,
+      :price,
+      :inventory_quantity,
+      variants_attributes: [:id, :size, :grind, :price, :inventory_quantity, :_destroy]
+    )
   end
 end

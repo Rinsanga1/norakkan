@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_11_112658) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_11_132727) do
   create_table "cart_items", force: :cascade do |t|
     t.integer "variant_id", null: false
     t.integer "cart_id", null: false
@@ -39,6 +39,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_11_112658) do
     t.integer "flavour_profile"
     t.integer "equipment"
     t.integer "stock"
+    t.integer "inventory_quantity", default: 0, null: false
+    t.index ["inventory_quantity"], name: "index_products_on_inventory_quantity"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -65,6 +67,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_11_112658) do
     t.decimal "price"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "inventory_quantity", default: 0, null: false
+    t.index ["inventory_quantity"], name: "index_variants_on_inventory_quantity"
     t.index ["product_id"], name: "index_variants_on_product_id"
   end
 

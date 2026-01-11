@@ -1,48 +1,197 @@
 <%= form_with(model: product) do |form| %>
+  <% if product.errors.any? %>
+    <div style="color: red; margin-bottom: 20px;">
+      <h4>Please fix the following errors:</h4>
+      <ul>
+        <% product.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <h2>Product Information</h2>
+
   <div>
-    <%= form.label :name %><br>
-    <%= form.text_field :name %>
+    <%= form.label :name, "Product Name" %><br>
+    <%= form.text_field :name, required: true, placeholder: "e.g., Ethiopian Yirgacheffe" %>
   </div>
 
   <div>
     <%= form.label :description %><br>
-    <%= form.text_area :description %>
+    <%= form.text_area :description, rows: 4, placeholder: "Describe your product..." %>
+  </div>
+
+  <h3>Product Details</h3>
+
+  <div>
+    <%= form.label :roast_level, "Roast Level" %><br>
+    <%= form.select :roast_level, Product.roast_levels.keys.map { |k| [k.humanize, k] }, { prompt: "Select Roast Level" }, { required: true } %>
   </div>
 
   <div>
-    <%= form.label :roast_level %><br>
-    <%= form.select :roast_level, Product.roast_levels.keys, {}, { prompt: "Select Roast Level" } %>
+    <%= form.label :drinking_preference, "Drinking Preference" %><br>
+    <%= form.select :drinking_preference, Product.drinking_preferences.keys.map { |k| [k.humanize, k] }, { prompt: "Select Drinking Preference" }, { required: true } %>
   </div>
 
   <div>
-    <%= form.label :drinking_preference %><br>
-    <%= form.select :drinking_preference, Product.drinking_preferences.keys, {}, { prompt: "Select Drinking Preference" } %>
+    <%= form.label :flavour_profile, "Flavour Profile" %><br>
+    <%= form.select :flavour_profile, Product.flavour_profiles.keys.map { |k| [k.humanize, k] }, { prompt: "Select Flavour Profile" }, { required: true } %>
   </div>
 
   <div>
-    <%= form.label :flavour_profile %><br>
-    <%= form.select :flavour_profile, Product.flavour_profiles.keys, {}, { prompt: "Select Flavour Profile" } %>
+    <%= form.label :equipment, "Recommended Equipment" %><br>
+    <%= form.select :equipment, Product.equipment.keys.map { |k| [k.humanize, k] }, { prompt: "Select Equipment" }, { required: true } %>
   </div>
 
-  <div>
-    <%= form.label :equipment %><br>
-    <%= form.select :equipment, Product.equipment.keys.map { |k| [k.humanize, k] }, {}, { prompt: "Select Equipment" } %>
+  <h3>Pricing & Inventory</h3>
+
+  <div style="margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 5px;">
+    <label>
+      <input type="checkbox" id="has_variants_checkbox" name="product[has_variants]" value="true">
+      <strong>This product has variants (different sizes/grinds with different prices)</strong>
+    </label>
+    <p style="font-size: 0.9em; color: #666; margin-top: 5px;">
+      Check this if you want to sell this product in different sizes (250g, 500g, 1000g) and grinds (wholebean, aeropress, etc.) with different prices.
+    </p>
   </div>
 
-  <div>
-    <%= form.label :stock %><br>
-    <%= form.number_field :stock %>
+  <div id="simple-product-fields">
+    <h4>Simple Product (No Variants)</h4>
+    <div>
+      <%= form.label :price, "Price" %><br>
+      <%= form.number_field :price, step: 0.01, min: 0, placeholder: "0.00" %>
+    </div>
+    <div>
+      <%= form.label :inventory_quantity, "Stock Quantity" %><br>
+      <%= form.number_field :inventory_quantity, min: 0, value: product.inventory_quantity || 0 %>
+    </div>
   </div>
 
-  <h3>Variants (Optional)</h3>
-  <p><em>Leave empty if product has no variants (single price)</em></p>
-  <%= form.fields_for :variants do |variant_form| %>
-    <%= render "variant_fields", form: variant_form %>
-  <% end %>
-  <%= link_to "Add Variant", "#", id: "add-variant" %>
+  <div id="variant-product-fields" style="display: none;">
+    <h4>Product Variants</h4>
+    <p style="color: #666; margin-bottom: 15px;">
+      Add variants for different size and grind combinations. Each variant can have its own price and stock level.
+    </p>
 
-  <div>
-    <%= form.submit %>
+    <div id="variants-container">
+      <%= form.fields_for :variants do |variant_form| %>
+        <%= render "variant_fields", form: variant_form %>
+      <% end %>
+    </div>
+
+    <button type="button" id="add-variant-btn" style="margin-top: 10px; padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+      + Add Variant
+    </button>
+  </div>
+
+  <div style="margin-top: 30px;">
+    <%= form.submit product.persisted? ? "Update Product" : "Create Product", style: "padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;" %>
   </div>
 <% end %>
 
+<script>
+  (function() {
+    // Wait for DOM to be ready
+    function initVariantToggle() {
+      const checkbox = document.getElementById('has_variants_checkbox');
+      const simpleFields = document.getElementById('simple-product-fields');
+      const variantFields = document.getElementById('variant-product-fields');
+      const addVariantBtn = document.getElementById('add-variant-btn');
+      const variantsContainer = document.getElementById('variants-container');
+
+      if (!checkbox || !simpleFields || !variantFields) {
+        console.error('Required elements not found');
+        return;
+      }
+
+      // Function to add a variant form
+      function addVariantForm() {
+        const variantIndex = variantsContainer.children.length;
+        const variantHtml = `
+          <div class="nested-fields" style="border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 5px; background: white;">
+            <h5>Variant ${variantIndex + 1}</h5>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+              <div>
+                <label>Size</label>
+                <select name="product[variants_attributes][${variantIndex}][size]" required>
+                  <option value="">Select Size</option>
+                  <option value="_250g">250g</option>
+                  <option value="_500g">500g</option>
+                  <option value="_1000g">1000g</option>
+                </select>
+              </div>
+              <div>
+                <label>Grind</label>
+                <select name="product[variants_attributes][${variantIndex}][grind]" required>
+                  <option value="">Select Grind</option>
+                  <option value="wholebean">Wholebean</option>
+                  <option value="aeropress">Aeropress</option>
+                  <option value="channi">Channi</option>
+                  <option value="coffee_filter">Coffee Filter</option>
+                  <option value="cold_brew">Cold Brew</option>
+                  <option value="commercial_espresso">Commercial Espresso</option>
+                  <option value="french_press">French Press</option>
+                  <option value="home_espresso">Home Espresso</option>
+                  <option value="inverted_aeropress">Inverted Aeropress</option>
+                  <option value="moka_pot">Moka Pot</option>
+                  <option value="pourover">Pourover</option>
+                  <option value="south_indian_filter">South Indian Filter</option>
+                </select>
+              </div>
+              <div>
+                <label>Price</label>
+                <input type="number" name="product[variants_attributes][${variantIndex}][price]" step="0.01" min="0" placeholder="0.00" required>
+              </div>
+              <div>
+                <label>Stock Quantity</label>
+                <input type="number" name="product[variants_attributes][${variantIndex}][inventory_quantity]" min="0" value="0" required>
+              </div>
+            </div>
+            <button type="button" onclick="this.closest('.nested-fields').remove()" style="margin-top: 10px; padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
+              Remove Variant
+            </button>
+          </div>
+        `;
+        variantsContainer.insertAdjacentHTML('beforeend', variantHtml);
+      }
+
+      // Handle checkbox change
+      checkbox.addEventListener('change', function() {
+        console.log('Checkbox changed:', this.checked);
+
+        if (this.checked) {
+          simpleFields.style.display = 'none';
+          variantFields.style.display = 'block';
+
+          // Auto-add first variant form if container is empty
+          if (variantsContainer && variantsContainer.children.length === 0) {
+            addVariantForm();
+          }
+        } else {
+          simpleFields.style.display = 'block';
+          variantFields.style.display = 'none';
+        }
+      });
+
+      // Handle add variant button
+      if (addVariantBtn) {
+        addVariantBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          addVariantForm();
+        });
+      }
+    }
+
+    // Try multiple ways to ensure script runs
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initVariantToggle);
+    } else {
+      initVariantToggle();
+    }
+
+    // Also handle Turbo navigation (if using Turbo)
+    document.addEventListener('turbo:load', initVariantToggle);
+    document.addEventListener('turbo:render', initVariantToggle);
+  })();
+</script>

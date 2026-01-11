@@ -4,11 +4,12 @@
   <p><%= @product.description %></p>
 
   <% if @product.variants.any? %>
-    <div data-variants-target="variants" data-variants="<%= @product.variants.to_json(only: [:id, :size, :grind, :price]) %>">
+    <div data-variants-target="variants" data-variants="<%= @product.variants.to_json(only: [:id, :size, :grind, :price, :inventory_quantity]) %>">
       <div>
         <label for="size">Size</label>
-        <select id="size" data-action="change->variants#updatePrice">
-          <% @product.variants.map(&:size).uniq.each do |size| %>
+        <select id="size" data-action="change->variants#updateSize">
+          <option value="">Select Size</option>
+          <% @product.variants.map(&:size).compact.uniq.each do |size| %>
             <option value="<%= size %>"><%= size.humanize %></option>
           <% end %>
         </select>
@@ -16,30 +17,44 @@
 
       <div>
         <label for="grind">Grind</label>
-        <select id="grind" data-action="change->variants#updatePrice">
-          <% @product.variants.map(&:grind).uniq.each do |grind| %>
-            <option value="<%= grind %>"><%= grind.humanize %></option>
-          <% end %>
+        <select id="grind" data-action="change->variants#updatePrice" disabled>
+          <option value="">Select Grind</option>
         </select>
       </div>
     </div>
 
-    <p>Price: <span data-variants-target="price"></span></p>
+    <p>Price: <span data-variants-target="price">--</span></p>
+
+    <!-- Stock status display -->
+    <div data-variants-target="stockStatus">
+      <p><strong>Stock:</strong> <span data-variants-target="stockText">--</span></p>
+    </div>
 
     <%= form_with url: cart_items_path do |form| %>
       <%= form.hidden_field :variant_id, data: { "variants-target": "variantId" } %>
-      <%= form.submit "Add to cart" %>
+      <%= form.number_field :quantity, value: 1, min: 1, data: { "variants-target": "quantity" }, style: "width: 60px; margin-right: 10px;" %>
+      <%= form.submit "Add to cart", data: { "variants-target": "submitButton" }, disabled: true %>
     <% end %>
   <% else %>
+    <!-- Simple product without variants -->
     <p>Price: <%= number_to_currency(@product.price) %></p>
+
+    <!-- Stock status for simple product -->
+    <% if @product.out_of_stock? %>
+      <p><strong style="color: red;">Out of Stock</strong></p>
+    <% elsif @product.inventory_quantity < 10 %>
+      <p><strong style="color: orange;">Low Stock - Only <%= @product.inventory_quantity %> left</strong></p>
+    <% else %>
+      <p><strong style="color: green;">In Stock (<%= @product.inventory_quantity %> available)</strong></p>
+    <% end %>
 
     <%= form_with url: cart_items_path do |form| %>
       <%= form.hidden_field :product_id, value: @product.id %>
-      <%= form.submit "Add to cart" %>
+      <%= form.number_field :quantity, value: 1, min: 1, max: @product.inventory_quantity, style: "width: 60px; margin-right: 10px;" %>
+      <%= form.submit "Add to cart", disabled: @product.out_of_stock? %>
     <% end %>
   <% end %>
 
   <p><%= link_to "Edit", edit_product_path(@product) %></p>
   <p><%= link_to "Delete", product_path(@product), data: { "turbo-method": :delete, "turbo-confirm": "Are you sure?" } %></p>
 </div>
-
