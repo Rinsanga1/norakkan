@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["variants", "price", "variantId", "grind", "stockText", "stockStatus", "quantity", "submitButton"]
+  static targets = ["variants", "price", "variantId", "grind", "stockText", "stockStatus", "quantity", "submitButton", "sku"]
 
   connect() {
     this.variants = JSON.parse(this.variantsTarget.dataset.variants)
@@ -19,6 +19,7 @@ export default class extends Controller {
       grindSelect.disabled = true
       this.priceTarget.textContent = "--"
       this.variantIdTarget.value = ""
+      this.skuTarget.textContent = "--"
       this.updateStockStatus(null)
       if (submitButton) submitButton.disabled = true
       return
@@ -51,6 +52,7 @@ export default class extends Controller {
     if (!selectedSize || !selectedGrind) {
       this.priceTarget.textContent = "--"
       this.variantIdTarget.value = ""
+      if (this.hasSkuTarget) this.skuTarget.textContent = "--"
       this.updateStockStatus(null)
       if (submitButton) submitButton.disabled = true
       return
@@ -65,6 +67,11 @@ export default class extends Controller {
       this.variantIdTarget.value = variant.id
       this.updateStockStatus(variant)
 
+      // Update SKU display
+      if (this.hasSkuTarget) {
+        this.skuTarget.textContent = variant.sku || "Not assigned"
+      }
+
       // Set max quantity
       if (quantityInput) {
         quantityInput.max = variant.inventory_quantity
@@ -75,6 +82,7 @@ export default class extends Controller {
     } else {
       this.priceTarget.textContent = "Not available"
       this.variantIdTarget.value = ""
+      if (this.hasSkuTarget) this.skuTarget.textContent = "--"
       this.updateStockStatus(null)
       if (submitButton) submitButton.disabled = true
     }
@@ -103,3 +111,4 @@ export default class extends Controller {
     return str.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
   }
 }
+

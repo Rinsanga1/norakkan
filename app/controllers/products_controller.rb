@@ -53,7 +53,9 @@ class ProductsController < ApplicationController
       :stock,
       :price,
       :inventory_quantity,
-      variants_attributes: [:id, :size, :grind, :price, :inventory_quantity, :_destroy]
+      :sku,
+      variants_attributes: [:id, :size, :grind, :price, :inventory_quantity, :sku, :_destroy]
     )
   end
 end
+

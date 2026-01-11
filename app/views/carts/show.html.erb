@@ -3,14 +3,23 @@
 <% @cart.cart_items.each do |item| %>
   <% next unless item.variant.present? || item.product.present? %>
   <div>
-    <p><%= item.product_name %></p>
+    <p><strong><%= item.product_name %></strong></p>
     <% if item.variant.present? %>
-      <p><%= item.variant.size %>, <%= item.variant.grind %></p>
+      <p><%= item.variant.size.humanize %>, <%= item.variant.grind.humanize %></p>
+      <p><small>SKU: <%= item.variant.sku || "N/A" %></small></p>
+      <% if item.variant.out_of_stock? %>
+        <p style="color: red;"><strong>⚠ Out of Stock</strong></p>
+      <% elsif item.variant.low_stock? %>
+        <p style="color: orange;"><strong>⚠ Low Stock - Only <%= item.variant.inventory_quantity %> left</strong></p>
+      <% end %>
+    <% else %>
+      <p><small>SKU: <%= item.product.sku || "N/A" %></small></p>
     <% end %>
     <p>Quantity: <%= item.quantity %></p>
-    <p>Price: <%= item.price %></p>
+    <p>Price: <%= number_to_currency(item.price) %></p>
+    <p>Subtotal: <%= number_to_currency(item.price * item.quantity) %></p>
     <p><%= button_to "Remove", cart_item_path(item), method: :delete %></p>
   </div>
 <% end %>
 
-<h2>Total: <%= @cart.total %></h2>
+<h2>Total: <%= number_to_currency(@cart.total) %></h2>

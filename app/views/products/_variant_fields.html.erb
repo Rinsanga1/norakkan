@@ -1,5 +1,5 @@
 <div class="nested-fields" style="border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 5px; background: white;">
-  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 15px; align-items: end;">
+  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr auto; gap: 15px; align-items: end;">
     <div>
       <%= form.label :size, "Size" %>
       <%= form.select :size, Variant.sizes.keys.map { |s| [s.humanize, s] }, { prompt: "Select Size" }, { required: true } %>
@@ -20,6 +20,20 @@
       <%= form.number_field :inventory_quantity, min: 0, value: form.object.inventory_quantity || 0, required: true %>
       <% if form.object.persisted? && form.object.low_stock? %>
         <span style="color: orange; font-size: 0.9em;">⚠ Low Stock</span>
+      <% end %>
+    </div>
+
+    <div>
+      <%= form.label :sku, "SKU" %>
+      <%= form.text_field :sku, placeholder: "Auto-generated if blank", style: "text-transform: uppercase;" %>
+      <% if form.object.persisted? && form.object.sku.present? %>
+        <small style="color: #666; display: block; margin-top: 2px;">
+          Current: <%= form.object.sku %>
+        </small>
+      <% else %>
+        <small style="color: #666; display: block; margin-top: 2px;">
+          Leave blank to auto-generate
+        </small>
       <% end %>
     </div>
 

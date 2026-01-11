@@ -4,7 +4,7 @@
   <p><%= @product.description %></p>
 
   <% if @product.variants.any? %>
-    <div data-variants-target="variants" data-variants="<%= @product.variants.to_json(only: [:id, :size, :grind, :price, :inventory_quantity]) %>">
+    <div data-variants-target="variants" data-variants="<%= @product.variants.to_json(only: [:id, :size, :grind, :price, :inventory_quantity, :sku]) %>">
       <div>
         <label for="size">Size</label>
         <select id="size" data-action="change->variants#updateSize">
@@ -25,6 +25,9 @@
 
     <p>Price: <span data-variants-target="price">--</span></p>
 
+    <!-- SKU display -->
+    <p>SKU: <span data-variants-target="sku">--</span></p>
+
     <!-- Stock status display -->
     <div data-variants-target="stockStatus">
       <p><strong>Stock:</strong> <span data-variants-target="stockText">--</span></p>
@@ -38,6 +41,9 @@
   <% else %>
     <!-- Simple product without variants -->
     <p>Price: <%= number_to_currency(@product.price) %></p>
+
+    <!-- SKU display -->
+    <p>SKU: <%= @product.sku || "Not assigned" %></p>
 
     <!-- Stock status for simple product -->
     <% if @product.out_of_stock? %>

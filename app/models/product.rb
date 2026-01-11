@@ -13,7 +13,11 @@ class Product < ApplicationRecord
 
   validates :price, presence: true, numericality: { greater_than: 0 }, if: -> { variants.empty? }
   validates :inventory_quantity, presence: true, numericality: { greater_than_or_equal_to: 0 }, if: -> { variants.empty? }
+  validates :sku, uniqueness: true, allow_nil: true
   validate :has_price_or_variants
+
+  before_validation :normalize_sku, if: -> { sku.present? }
+  after_create :generate_sku, if: -> { sku.blank? && variants.empty? }
 
   # Get price - either from first variant or product's own price
   def price
@@ -58,5 +62,28 @@ class Product < ApplicationRecord
     if variants.empty? && price.nil?
       errors.add(:base, "Product must have either variants or a direct price")
     end
+  end
+
+  # Generate SKU for simple products (without variants)
+  def generate_sku
+    return if variants.any? # Only generate for simple products
+
+    product_name_clean = name.to_s.gsub(/[^a-zA-Z0-9]/, '').upcase
+    product_code = product_name_clean[0..3] || "PRD"
+
+    generated_sku = "#{product_code}-#{id.to_s.rjust(4, '0')}"
+
+    # Check if SKU already exists
+    if Product.where(sku: generated_sku).where.not(id: id).exists?
+      generated_sku = "#{product_code}-#{id.to_s.rjust(4, '0')}-#{SecureRandom.hex(2).upcase}"
+    end
+
+    update_column(:sku, generated_sku)
+  end
+
+  # Normalize SKU
+  def normalize_sku
+    return if sku.blank?
+    self.sku = sku.to_s.upcase.strip.gsub(/\s+/, '-').gsub(/[^a-zA-Z0-9\-]/, '')
   end
 end
