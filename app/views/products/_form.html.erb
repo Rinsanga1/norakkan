@@ -1,0 +1,48 @@
+<%= form_with(model: product) do |form| %>
+  <div>
+    <%= form.label :name %><br>
+    <%= form.text_field :name %>
+  </div>
+
+  <div>
+    <%= form.label :description %><br>
+    <%= form.text_area :description %>
+  </div>
+
+  <div>
+    <%= form.label :roast_level %><br>
+    <%= form.select :roast_level, Product.roast_levels.keys, {}, { prompt: "Select Roast Level" } %>
+  </div>
+
+  <div>
+    <%= form.label :drinking_preference %><br>
+    <%= form.select :drinking_preference, Product.drinking_preferences.keys, {}, { prompt: "Select Drinking Preference" } %>
+  </div>
+
+  <div>
+    <%= form.label :flavour_profile %><br>
+    <%= form.select :flavour_profile, Product.flavour_profiles.keys, {}, { prompt: "Select Flavour Profile" } %>
+  </div>
+
+  <div>
+    <%= form.label :equipment %><br>
+    <%= form.select :equipment, Product.equipment.keys.map { |k| [k.humanize, k] }, {}, { prompt: "Select Equipment" } %>
+  </div>
+
+  <div>
+    <%= form.label :stock %><br>
+    <%= form.number_field :stock %>
+  </div>
+
+  <h3>Variants (Optional)</h3>
+  <p><em>Leave empty if product has no variants (single price)</em></p>
+  <%= form.fields_for :variants do |variant_form| %>
+    <%= render "variant_fields", form: variant_form %>
+  <% end %>
+  <%= link_to "Add Variant", "#", id: "add-variant" %>
+
+  <div>
+    <%= form.submit %>
+  </div>
+<% end %>
+

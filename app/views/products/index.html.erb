@@ -1,0 +1,9 @@
+<h1>Norakkan Store</h1>
+
+<%= link_to "New Product", new_product_path %>
+
+<ul>
+  <% @products.each do |product| %>
+    <li><%= link_to product.name, product_path(product.id) %></li>
+  <% end %>
+</ul>

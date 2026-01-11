@@ -1,0 +1,19 @@
+<div class="nested-fields">
+  <div>
+    <%= form.label :size %>
+    <%= form.select :size, Variant.sizes.keys.map { |s| [s.humanize, s] }, prompt: "Select Size" %>
+  </div>
+
+  <div>
+    <%= form.label :grind %>
+    <%= form.select :grind, Variant.grinds.keys, prompt: "Select Grind" %>
+  </div>
+
+  <div>
+    <%= form.label :price %>
+    <%= form.number_field :price, step: :any %>
+  </div>
+
+  <%= form.hidden_field :_destroy %>
+  <button type="button" data-action="nested-form#remove">Remove Variant</button>
+</div>
