@@ -40,7 +40,7 @@
           <div style="position: relative; border: 1px solid #ddd; padding: 5px; border-radius: 5px;">
             <%= image_tag image.variant(resize_to_limit: [100, 100]), style: "width: 100px; height: 100px; object-fit: cover; border-radius: 3px;" %>
             <div style="margin-top: 5px; text-align: center;">
-              <%= link_to "Remove", purge_product_image_path(product, image.id),
+              <%= link_to "Remove", purge_image_product_path(product, image_id: image.id),
                   method: :delete, data: { confirm: "Are you sure you want to remove this image?" },
                   style: "color: #dc3545; font-size: 0.8em; text-decoration: underline;" %>
             </div>
