@@ -1,6 +1,6 @@
 <%= form_with(model: product, multipart: true) do |form| %>
   <% if product.errors.any? %>
-    <div style="color: red; margin-bottom: 20px;">
+    <div class="form-errors">
       <h4>Please fix the following errors:</h4>
       <ul>
         <% product.errors.full_messages.each do |message| %>
@@ -12,14 +12,14 @@
 
   <h2>Product Information</h2>
 
-  <div>
-    <%= form.label :name, "Product Name" %><br>
-    <%= form.text_field :name, required: true, placeholder: "e.g., Ethiopian Yirgacheffe" %>
+  <div class="form-field">
+    <%= form.label :name, "Product Name", class: "form-label" %>
+    <%= form.text_field :name, required: true, placeholder: "e.g., Ethiopian Yirgacheffe", class: "form-input" %>
   </div>
 
-  <div>
-    <%= form.label :description %><br>
-    <%= form.text_area :description, rows: 4, placeholder: "Describe your product..." %>
+  <div class="form-field">
+    <%= form.label :description, class: "form-label" %>
+    <%= form.text_area :description, rows: 4, placeholder: "Describe your product...", class: "form-textarea" %>
   </div>
 
   <!-- Product Images Section -->

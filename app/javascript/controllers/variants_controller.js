@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["variants", "price", "variantId", "grind", "stockText", "stockStatus", "quantity", "submitButton", "sku"]
+  static targets = ["variants", "price", "variantId", "grind", "stockText", "stockStatus", "quantity", "submitButton", "sku", "btnMinus", "btnPlus"]
 
   connect() {
     this.variants = JSON.parse(this.variantsTarget.dataset.variants)
@@ -137,6 +137,32 @@ export default class extends Controller {
 
   humanize(str) {
     return str.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+  }
+
+  // Increment quantity for variant products
+  incrementQuantity() {
+    const quantityInput = this.quantityTarget || this.element.querySelector('input[name="quantity"]')
+    if (!quantityInput) return
+    
+    const max = parseInt(quantityInput.max) || 999
+    const current = parseInt(quantityInput.value) || 1
+    
+    if (current < max) {
+      quantityInput.value = current + 1
+    }
+  }
+
+  // Decrement quantity for variant products
+  decrementQuantity() {
+    const quantityInput = this.quantityTarget || this.element.querySelector('input[name="quantity"]')
+    if (!quantityInput) return
+    
+    const min = parseInt(quantityInput.min) || 1
+    const current = parseInt(quantityInput.value) || 1
+    
+    if (current > min) {
+      quantityInput.value = current - 1
+    }
   }
 }
 

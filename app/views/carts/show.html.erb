@@ -22,10 +22,10 @@
           <div class="no-image">No Image</div>
         <% end %>
       </div>
-      
+
       <div class="item-details">
         <h3><%= item.product_name %></h3>
-        
+
         <% if item.variant.present? %>
           <p class="variant-info"><%= item.variant.size.humanize %> / <%= item.variant.grind.humanize %></p>
           <p class="sku">SKU: <%= item.variant.sku || "N/A" %></p>
@@ -38,22 +38,28 @@
           <p class="sku">SKU: <%= product.sku || "N/A" %></p>
         <% end %>
       </div>
-      
+
       <div class="item-price">
         <p class="price">₹<%= number_with_precision(item.price, precision: 2) %></p>
         <p class="subtotal">₹<%= number_with_precision(item.price * item.quantity, precision: 2) %></p>
       </div>
-      
+
       <div class="item-quantity">
         <%= form_with(url: cart_item_path(item), method: :patch, local: true, class: "quantity-form") do |form| %>
-          <%= form.number_field :quantity, value: item.quantity, min: 1, max: 99, class: "quantity-input" %>
-          <%= form.submit "Update", class: "btn btn-sm btn-secondary" %>
+          <% max_quantity = item.variant ? item.variant.inventory_quantity : item.product.inventory_quantity %>
+          <div class="quantity-selector">
+            <button type="button" class="quantity-btn quantity-btn-minus" onclick="decrementCartQuantity(this, <%= max_quantity %>)">−</button>
+            <%= number_field_tag "quantity", item.quantity, min: 1, max: max_quantity, 
+                                 class: "quantity-input",
+                                 onchange: "this.form.submit()" %>
+            <button type="button" class="quantity-btn quantity-btn-plus" onclick="incrementCartQuantity(this, <%= max_quantity %>)">+</button>
+          </div>
         <% end %>
       </div>
-      
+
       <div class="item-actions">
-        <%= button_to "Remove", cart_item_path(item), method: :delete, 
-            class: "btn btn-sm btn-danger", 
+        <%= button_to "Remove", cart_item_path(item), method: :delete,
+            class: "btn btn-sm btn-danger",
             data: { confirm: "Are you sure you want to remove this item?" } %>
       </div>
     </div>
@@ -66,7 +72,31 @@
     <p class="total-amount">₹<%= number_with_precision(@cart.total, precision: 2) %></p>
   </div>
   <div class="cart-actions">
-    <%= link_to "Continue Shopping", products_path, class: "btn btn-secondary" %>
-    <%= link_to "Proceed to Checkout", "#", class: "btn btn-primary" %>
+<%= link_to "Continue Shopping", products_path, class: "btn btn-secondary" %>
   </div>
+</div>
+
+<script>
+  // Quantity selector functions for cart updates
+  function incrementCartQuantity(button, max) {
+    const input = button.parentElement.querySelector('input[type="number"]');
+    const current = parseInt(input.value) || 1;
+    
+    if (current < max) {
+      input.value = current + 1;
+      input.form.submit();
+    }
+  }
+
+  function decrementCartQuantity(button, max) {
+    const input = button.parentElement.querySelector('input[type="number"]');
+    const min = parseInt(input.min);
+    const current = parseInt(input.value) || 1;
+    
+    if (current > min) {
+      input.value = current - 1;
+      input.form.submit();
+    }
+  }
+</script>
 </div>
