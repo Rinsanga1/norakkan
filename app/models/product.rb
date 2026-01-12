@@ -1,5 +1,6 @@
 class Product < ApplicationRecord
   has_many :variants, dependent: :destroy
+  has_many :cart_items, dependent: :nullify
   accepts_nested_attributes_for :variants,
     allow_destroy: true,
     reject_if: ->(attrs) { attrs["size"].blank? || attrs["grind"].blank? || attrs["price"].blank? }

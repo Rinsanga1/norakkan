@@ -36,6 +36,12 @@ class ProductsController < ApplicationController
 
   def destroy
     @product = Product.find(params[:id])
+
+    if @product.cart_items.any? || @product.variants.any? { |v| v.cart_items.any? }
+      redirect_to @product, alert: "Cannot delete this product. It is currently in one or more shopping carts."
+      return
+    end
+
     @product.destroy
     redirect_to products_path, notice: "Product deleted successfully."
   end
