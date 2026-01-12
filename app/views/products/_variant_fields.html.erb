@@ -41,7 +41,7 @@
 
     <div>
       <%= form.hidden_field :_destroy, value: false %>
-      <button type="button" onclick="this.closest('.nested-fields').querySelector('input[name*=\"_destroy\"]').value='1'; this.closest('.nested-fields').style.display='none';" style="padding: 8px 15px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
+      <button type="button" data-action="click->product-form#removeVariant" style="padding: 8px 15px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
         Remove
       </button>
     </div>

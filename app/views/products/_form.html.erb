@@ -126,7 +126,6 @@
       const checkbox = document.getElementById('has_variants_checkbox');
       const simpleFields = document.getElementById('simple-product-fields');
       const variantFields = document.getElementById('variant-product-fields');
-      const productImagesSection = document.getElementById('product-images-section');
       const addVariantBtn = document.getElementById('add-variant-btn');
       const variantsContainer = document.getElementById('variants-container');
 
@@ -194,7 +193,6 @@
         if (this.checked) {
           simpleFields.style.display = 'none';
           variantFields.style.display = 'block';
-          // Product images section stays visible - variants use product images
 
           // Auto-add first variant form if container is empty
           if (variantsContainer && variantsContainer.children.length === 0) {
@@ -211,7 +209,6 @@
         checkbox.checked = true;
         simpleFields.style.display = 'none';
         variantFields.style.display = 'block';
-        // Product images section stays visible
       <% end %>
 
       // Handle add variant button
@@ -235,3 +232,5 @@
     document.addEventListener('turbo:render', initVariantToggle);
   })();
 </script>
+
+
