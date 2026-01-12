@@ -1,33 +1,42 @@
+<!-- VARIANT FORM SECTION - Single variant configuration card -->
 <div class="nested-fields" style="border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 5px; background: white;">
   <h5>Variant <%= form.index + 1 %></h5>
 
+  <!-- VARIANT FIELDS GRID - Size, grind, price, stock, SKU, and remove button -->
   <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr auto; gap: 15px; align-items: end;">
+    <!-- SIZE SELECTOR -->
     <div>
       <%= form.label :size, "Size" %>
       <%= form.select :size, Variant.sizes.keys.map { |s| [s.humanize, s] }, { prompt: "Select Size" }, { required: true } %>
     </div>
 
+    <!-- GRIND SELECTOR -->
     <div>
       <%= form.label :grind, "Grind" %>
       <%= form.select :grind, Variant.grinds.keys.map { |g| [g.humanize, g] }, { prompt: "Select Grind" }, { required: true } %>
     </div>
 
+    <!-- PRICE INPUT -->
     <div>
       <%= form.label :price, "Price" %>
       <%= form.number_field :price, step: 0.01, min: 0, placeholder: "0.00", required: true %>
     </div>
 
+    <!-- STOCK QUANTITY INPUT -->
     <div>
       <%= form.label :inventory_quantity, "Stock" %>
       <%= form.number_field :inventory_quantity, min: 0, value: form.object.inventory_quantity || 0, required: true %>
+      <!-- LOW STOCK WARNING -->
       <% if form.object.persisted? && form.object.low_stock? %>
         <span style="color: orange; font-size: 0.9em;">⚠ Low Stock</span>
       <% end %>
     </div>
 
+    <!-- SKU INPUT -->
     <div>
       <%= form.label :sku, "SKU" %>
       <%= form.text_field :sku, placeholder: "Auto-generated if blank", style: "text-transform: uppercase;" %>
+      <!-- SKU HELPER TEXT -->
       <% if form.object.persisted? && form.object.sku.present? %>
         <small style="color: #666; display: block; margin-top: 2px;">
           Current: <%= form.object.sku %>
@@ -39,6 +48,7 @@
       <% end %>
     </div>
 
+    <!-- REMOVE VARIANT BUTTON -->
     <div>
       <%= form.hidden_field :_destroy, value: false %>
       <button type="button" data-action="click->product-form#removeVariant" style="padding: 8px 15px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">

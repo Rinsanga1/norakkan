@@ -1,4 +1,6 @@
+<!-- PRODUCT FORM - Create or edit product form -->
 <%= form_with(model: product, multipart: true) do |form| %>
+  <!-- FORM ERRORS - Displays validation errors if form has issues -->
   <% if product.errors.any? %>
     <div class="form-errors">
       <h4>Please fix the following errors:</h4>
@@ -10,36 +12,42 @@
     </div>
   <% end %>
 
+  <!-- PRODUCT INFORMATION SECTION - Name and description -->
   <h2>Product Information</h2>
 
   <div class="form-field">
+    <!-- PRODUCT NAME INPUT -->
     <%= form.label :name, "Product Name", class: "form-label" %>
     <%= form.text_field :name, required: true, placeholder: "e.g., Ethiopian Yirgacheffe", class: "form-input" %>
   </div>
 
   <div class="form-field">
+    <!-- PRODUCT DESCRIPTION TEXTAREA -->
     <%= form.label :description, class: "form-label" %>
     <%= form.text_area :description, rows: 4, placeholder: "Describe your product...", class: "form-textarea" %>
   </div>
 
-  <!-- Product Images Section -->
+  <!-- PRODUCT IMAGES SECTION - Upload multiple product images -->
   <div id="product-images-section" style="margin: 20px 0;">
     <h3>Product Images</h3>
     <p style="color: #666; font-size: 0.9em;">Upload multiple images for this product. All variants will use these product images.</p>
 
     <div>
+      <!-- IMAGE UPLOAD FIELD - Accepts multiple image files -->
       <%= form.label :images, "Upload Images" %><br>
       <%= form.file_field :images, multiple: true, accept: "image/jpeg,image/jpg,image/png,image/gif,image/webp", class: "form-control" %>
       <small style="color: #666;">You can select multiple images. Max 5MB per image.</small>
     </div>
 
-    <!-- Display existing images -->
+    <!-- EXISTING IMAGES DISPLAY - Shows already uploaded images with remove buttons -->
     <% if product.images.attached? %>
       <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;">
         <% product.images.each_with_index do |image, index| %>
           <div style="position: relative; border: 1px solid #ddd; padding: 5px; border-radius: 5px;">
+            <!-- IMAGE THUMBNAIL -->
             <%= image_tag image.variant(resize_to_limit: [100, 100]), style: "width: 100px; height: 100px; object-fit: cover; border-radius: 3px;" %>
             <div style="margin-top: 5px; text-align: center;">
+              <!-- REMOVE IMAGE BUTTON -->
               <%= link_to "Remove", purge_image_product_path(product, image_id: image.id),
                   method: :delete, data: { confirm: "Are you sure you want to remove this image?" },
                   style: "color: #dc3545; font-size: 0.8em; text-decoration: underline;" %>
@@ -50,32 +58,40 @@
     <% end %>
   </div>
 
+  <!-- PRODUCT DETAILS SECTION - Roast level, drinking preference, flavour profile, equipment -->
   <h3>Product Details</h3>
 
+  <!-- ROAST LEVEL SELECTOR -->
   <div>
     <%= form.label :roast_level, "Roast Level" %><br>
     <%= form.select :roast_level, Product.roast_levels.keys.map { |k| [k.humanize, k] }, { prompt: "Select Roast Level" }, { required: true } %>
   </div>
 
+  <!-- DRINKING PREFERENCE SELECTOR -->
   <div>
     <%= form.label :drinking_preference, "Drinking Preference" %><br>
     <%= form.select :drinking_preference, Product.drinking_preferences.keys.map { |k| [k.humanize, k] }, { prompt: "Select Drinking Preference" }, { required: true } %>
   </div>
 
+  <!-- FLAVOUR PROFILE SELECTOR -->
   <div>
     <%= form.label :flavour_profile, "Flavour Profile" %><br>
     <%= form.select :flavour_profile, Product.flavour_profiles.keys.map { |k| [k.humanize, k] }, { prompt: "Select Flavour Profile" }, { required: true } %>
   </div>
 
+  <!-- EQUIPMENT SELECTOR -->
   <div>
     <%= form.label :equipment, "Recommended Equipment" %><br>
     <%= form.select :equipment, Product.equipment.keys.map { |k| [k.humanize, k] }, { prompt: "Select Equipment" }, { required: true } %>
   </div>
 
+  <!-- PRICING & INVENTORY SECTION -->
   <h3>Pricing & Inventory</h3>
 
+  <!-- VARIANT TOGGLE - Checkbox to switch between simple product and variant product modes -->
   <div style="margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 5px;">
     <label>
+      <!-- HAS VARIANTS CHECKBOX - Toggles between simple and variant product forms -->
       <input type="checkbox" id="has_variants_checkbox" value="true">
       <strong>This product has variants (different sizes/grinds with different prices)</strong>
     </label>
@@ -85,40 +101,48 @@
     </p>
   </div>
 
+  <!-- SIMPLE PRODUCT FIELDS - Shown when product has no variants -->
   <div id="simple-product-fields">
     <h4>Simple Product (No Variants)</h4>
+    <!-- PRICE INPUT -->
     <div>
       <%= form.label :price, "Price" %><br>
       <%= form.number_field :price, step: 0.01, min: 0, placeholder: "0.00" %>
     </div>
+    <!-- STOCK QUANTITY INPUT -->
     <div>
       <%= form.label :inventory_quantity, "Stock Quantity" %><br>
       <%= form.number_field :inventory_quantity, min: 0, value: product.inventory_quantity || 0 %>
     </div>
   </div>
 
+  <!-- VARIANT PRODUCT FIELDS - Shown when product has variants (hidden by default) -->
   <div id="variant-product-fields" style="display: none;">
     <h4>Product Variants</h4>
     <p style="color: #666; margin-bottom: 15px;">
       Add variants for different size and grind combinations. Each variant can have its own price, stock level, and images.
     </p>
 
+    <!-- VARIANTS CONTAINER - Holds all variant form cards -->
     <div id="variants-container">
       <%= form.fields_for :variants do |variant_form| %>
         <%= render "variant_fields", form: variant_form %>
       <% end %>
     </div>
 
+    <!-- ADD VARIANT BUTTON - Dynamically adds new variant form -->
     <button type="button" id="add-variant-btn" style="margin-top: 10px; padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
       + Add Variant
     </button>
   </div>
 
+  <!-- FORM SUBMIT BUTTON -->
   <div style="margin-top: 30px;">
     <%= form.submit product.persisted? ? "Update Product" : "Create Product", style: "padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;" %>
   </div>
 <% end %>
 
+<!-- JAVASCRIPT FOR VARIANT TOGGLE AND FORM GENERATION -->
 <script>
   (function() {
     // Wait for DOM to be ready
@@ -141,6 +165,7 @@
           <div class="nested-fields" style="border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 5px; background: white;">
             <h5>Variant ${variantIndex + 1}</h5>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+              <!-- VARIANT SIZE SELECTOR -->
               <div>
                 <label>Size</label>
                 <select name="product[variants_attributes][${variantIndex}][size]" required>
@@ -150,6 +175,7 @@
                   <option value="_1000g">1000g</option>
                 </select>
               </div>
+              <!-- VARIANT GRIND SELECTOR -->
               <div>
                 <label>Grind</label>
                 <select name="product[variants_attributes][${variantIndex}][grind]" required>
@@ -168,16 +194,19 @@
                   <option value="south_indian_filter">South Indian Filter</option>
                 </select>
               </div>
+              <!-- VARIANT PRICE INPUT -->
               <div>
                 <label>Price</label>
                 <input type="number" name="product[variants_attributes][${variantIndex}][price]" step="0.01" min="0" placeholder="0.00" required>
               </div>
+              <!-- VARIANT STOCK QUANTITY INPUT -->
               <div>
                 <label>Stock Quantity</label>
                 <input type="number" name="product[variants_attributes][${variantIndex}][inventory_quantity]" min="0" value="0" required>
               </div>
             </div>
-            
+
+            <!-- REMOVE VARIANT BUTTON -->
             <button type="button" onclick="this.closest('.nested-fields').remove()" style="margin-top: 10px; padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
               Remove Variant
             </button>
@@ -186,11 +215,12 @@
         variantsContainer.insertAdjacentHTML('beforeend', variantHtml);
       }
 
-      // Handle checkbox change
+      // Handle checkbox change - toggles between simple and variant forms
       checkbox.addEventListener('change', function() {
         console.log('Checkbox changed:', this.checked);
 
         if (this.checked) {
+          // Show variant fields, hide simple fields
           simpleFields.style.display = 'none';
           variantFields.style.display = 'block';
 
@@ -199,6 +229,7 @@
             addVariantForm();
           }
         } else {
+          // Show simple fields, hide variant fields
           simpleFields.style.display = 'block';
           variantFields.style.display = 'none';
         }
@@ -211,7 +242,7 @@
         variantFields.style.display = 'block';
       <% end %>
 
-      // Handle add variant button
+      // Handle add variant button click
       if (addVariantBtn) {
         addVariantBtn.addEventListener('click', function(e) {
           e.preventDefault();

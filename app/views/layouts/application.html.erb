@@ -24,6 +24,7 @@
 
   <body>
 
+    <!-- NAVIGATION BAR - Main site navigation with links to all pages -->
     <nav>
       <%= link_to "Norakkan", "/"%>
       <%= link_to "Store", "/products"%>
@@ -37,6 +38,7 @@
       <%= link_to "Cart", cart_path %>
     </nav>
 
+    <!-- MAIN CONTENT AREA - Renders the content from each page template -->
     <%= yield %>
   </body>
 </html>

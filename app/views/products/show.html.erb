@@ -1,15 +1,18 @@
 <div data-controller="variants">
+  <!-- BACK BUTTON - Returns to products listing -->
   <h3><%= link_to "Back", products_path %></h3>
 
   <div class="product-show-container">
-    <!-- Image Gallery -->
+    <!-- IMAGE GALLERY - Main product image with thumbnail navigation -->
     <div>
       <% if @product.has_variants? %>
-        <!-- Product images (shared across all variants) -->
+        <!-- VARIANT PRODUCT IMAGES - Product images (shared across all variants) -->
         <% if @product.images.attached? %>
           <div id="variant-image-gallery">
+            <!-- MAIN IMAGE - Large product image display -->
             <%= image_tag @product.images.first.variant(resize_to_limit: [1200, 1200]), class: "product-image-gallery" %>
           </div>
+          <!-- IMAGE THUMBNAILS - Clickable thumbnails to change main image -->
           <% if @product.images.count > 1 %>
             <div class="product-thumbnails">
               <% @product.images.each do |image| %>
@@ -21,16 +24,19 @@
             </div>
           <% end %>
         <% else %>
+          <!-- NO IMAGE PLACEHOLDER -->
           <div class="no-image-placeholder">
             No image available
           </div>
         <% end %>
       <% else %>
-        <!-- Simple product images -->
+        <!-- SIMPLE PRODUCT IMAGES - Images for products without variants -->
         <% if @product.images.attached? %>
           <div id="simple-image-main">
+            <!-- MAIN IMAGE - Large product image display -->
             <%= image_tag @product.images.first.variant(resize_to_limit: [1200, 1200]), class: "product-image-gallery" %>
           </div>
+          <!-- IMAGE THUMBNAILS - Clickable thumbnails to change main image -->
           <% if @product.images.count > 1 %>
             <div class="product-thumbnails">
               <% @product.images.each do |image| %>
@@ -42,6 +48,7 @@
             </div>
           <% end %>
         <% else %>
+          <!-- NO IMAGE PLACEHOLDER -->
           <div class="no-image-placeholder">
             No image available
           </div>
@@ -49,13 +56,15 @@
       <% end %>
     </div>
 
-    <!-- Product Details -->
+    <!-- PRODUCT DETAILS - Name, description, price, variant selector, and add to cart form -->
     <div>
+      <!-- PRODUCT TITLE -->
       <h1><%= @product.name %></h1>
+      <!-- PRODUCT DESCRIPTION -->
       <p><%= @product.description %></p>
 
       <% if @product.variants.any? %>
-        <!-- Pass variant data -->
+        <!-- VARIANT SELECTOR SECTION - Size and grind dropdowns with dynamic price updates -->
         <div data-variants-target="variants"
              data-variants="<%= @product.variants.map { |v|
                {
@@ -67,19 +76,21 @@
                  sku: v.sku
                }
              }.to_json %>">
+          <!-- SIZE SELECTOR - First dropdown: select product size -->
           <div>
             <label for="size"><strong>Size</strong></label>
-            <%= select_tag "size", options_for_select(@product.variants.map(&:size).compact.uniq.map { |s| [s.humanize, s] }), 
-                id: "size", 
+            <%= select_tag "size", options_for_select(@product.variants.map(&:size).compact.uniq.map { |s| [s.humanize, s] }),
+                id: "size",
                 data: { action: "change->variants#updateSize" },
                 class: "variant-select",
                 prompt: "Select Size" %>
           </div>
 
+          <!-- GRIND SELECTOR - Second dropdown: available grinds for selected size (populates dynamically) -->
           <div class="variant-margin">
             <label for="grind"><strong>Grind</strong></label>
-            <%= select_tag "grind", options_for_select([]), 
-                       id: "grind", 
+            <%= select_tag "grind", options_for_select([]),
+                       id: "grind",
                        data: { action: "change->variants#updatePrice" },
                        class: "variant-select",
                        prompt: "Select Grind",
@@ -87,40 +98,46 @@
           </div>
         </div>
 
+        <!-- VARIANT INFO - Price, SKU, and stock status (updates dynamically based on selected variant) -->
         <div class="variant-margin">
+          <!-- DYNAMIC PRICE - Updates when size/grind is selected -->
           <p><strong>Price:</strong> <span data-variants-target="price" class="product-price">--</span></p>
 
-          <!-- SKU display -->
+          <!-- SKU DISPLAY - Shows SKU of selected variant -->
           <p><strong>SKU:</strong> <span data-variants-target="sku">--</span></p>
 
-          <!-- Stock status display -->
+          <!-- STOCK STATUS - Shows in stock/low stock/out of stock with quantity -->
           <div data-variants-target="stockStatus">
             <p><strong>Stock:</strong> <span data-variants-target="stockText">--</span></p>
           </div>
         </div>
 
+        <!-- ADD TO CART FORM FOR VARIANT PRODUCTS -->
         <%= form_with url: cart_items_path, class: "add-to-cart-form" do |form| %>
           <%= form.hidden_field :variant_id, data: { "variants-target": "variantId" } %>
+          <!-- QUANTITY SELECTOR - Plus/minus buttons and input field -->
           <div class="quantity-selector">
   <button type="button" class="quantity-btn quantity-btn-minus" data-variants-target="btnMinus" data-action="click->variants#decrementQuantity">−</button>
-  <%= form.number_field :quantity, value: 1, min: 1, max: 999, 
+  <%= form.number_field :quantity, value: 1, min: 1, max: 999,
                              data: { "variants-target": "quantity" },
                              class: "quantity-input" %>
   <button type="button" class="quantity-btn quantity-btn-plus" data-variants-target="btnPlus" data-action="click->variants#incrementQuantity">+</button>
-</div>
+ </div>
+          <!-- ADD TO CART BUTTON -->
           <%= form.submit "Add to cart", data: { "variants-target": "submitButton" },
               disabled: true,
               class: "add-to-cart-btn" %>
         <% end %>
       <% else %>
-        <!-- Simple product details -->
+        <!-- SIMPLE PRODUCT DETAILS - Price, SKU, and stock for products without variants -->
         <div class="variant-margin">
+          <!-- FIXED PRICE - Static price for simple product -->
           <p><strong>Price:</strong> <span class="product-price"><%= number_to_currency(@product.price) %></span></p>
 
-          <!-- SKU display -->
+          <!-- SKU DISPLAY -->
           <p><strong>SKU:</strong> <%= @product.sku || "Not assigned" %></p>
 
-          <!-- Stock status for simple product -->
+          <!-- STOCK STATUS FOR SIMPLE PRODUCT - Shows in stock/low stock/out of stock with quantity -->
           <% if @product.out_of_stock? %>
             <p><strong class="stock-out">Out of Stock</strong></p>
           <% elsif @product.inventory_quantity < 10 %>
@@ -130,15 +147,18 @@
           <% end %>
         </div>
 
+        <!-- ADD TO CART FORM FOR SIMPLE PRODUCTS -->
         <%= form_with url: cart_items_path do |form| %>
           <%= form.hidden_field :product_id, value: @product.id %>
+          <!-- QUANTITY SELECTOR - Plus/minus buttons and input field -->
           <div class="quantity-selector">
   <button type="button" class="quantity-btn quantity-btn-minus" onclick="decrementQuantity(this)">−</button>
-  <%= form.number_field :quantity, value: 1, min: 1, max: @product.inventory_quantity, 
+  <%= form.number_field :quantity, value: 1, min: 1, max: @product.inventory_quantity,
                              class: "quantity-input",
                              id: "simple-quantity" %>
   <button type="button" class="quantity-btn quantity-btn-plus" onclick="incrementQuantity(this)">+</button>
-</div>
+ </div>
+          <!-- ADD TO CART BUTTON -->
           <%= form.submit "Add to cart",
               disabled: @product.out_of_stock?,
               class: "add-to-cart-btn" %>
@@ -147,7 +167,7 @@
     </div>
   </div>
 
-  <!-- Admin actions -->
+  <!-- ADMIN ACTIONS - Edit and delete buttons (visible to admin users) -->
   <div class="admin-actions">
     <%= link_to "Edit", edit_product_path(@product), class: "admin-btn admin-btn-edit" %>
     <%= link_to "Delete", product_path(@product),
@@ -159,13 +179,14 @@
   </div>
 </div>
 
+<!-- JAVASCRIPT FOR SIMPLE PRODUCT QUANTITY SELECTOR -->
 <script>
   // Quantity selector functions for simple product (non-variant products)
   function incrementQuantity(button) {
     const input = button.parentElement.querySelector('input[type="number"]');
     const max = parseInt(input.max);
     const current = parseInt(input.value) || 1;
-    
+
     if (current < max) {
       input.value = current + 1;
     }
@@ -175,10 +196,11 @@
     const input = button.parentElement.querySelector('input[type="number"]');
     const min = parseInt(input.min);
     const current = parseInt(input.value) || 1;
-    
+
     if (current > min) {
       input.value = current - 1;
     }
   }
 </script>
+
 

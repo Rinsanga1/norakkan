@@ -1,11 +1,17 @@
+<!-- FLASH MESSAGES - Alerts and notifications from previous actions -->
 <%= tag.div(flash[:alert], style: "color:red") if flash[:alert] %>
 <%= tag.div(flash[:notice], style: "color:green") if flash[:notice] %>
 
+<!-- LOGIN FORM -->
 <%= form_with url: session_path do |form| %>
+  <!-- EMAIL INPUT -->
   <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email_address] %><br>
+  <!-- PASSWORD INPUT -->
   <%= form.password_field :password, required: true, autocomplete: "current-password", placeholder: "Enter your password", maxlength: 72 %><br>
+  <!-- SUBMIT BUTTON -->
   <%= form.submit "Sign in" %>
 <% end %>
 <br>
 
+<!-- FORGOT PASSWORD LINK -->
 <%= link_to "Forgot password?", new_password_path %>

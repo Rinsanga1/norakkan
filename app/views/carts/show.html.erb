@@ -1,5 +1,7 @@
+<!-- CART HEADER -->
 <div class="cart-header">
   <h1>Your Cart</h1>
+  <!-- EMPTY CART MESSAGE - Shows when cart has no items -->
   <% if @cart.cart_items.empty? %>
     <div class="empty-cart">
       <p>Your cart is empty.</p>
@@ -9,12 +11,15 @@
   <% end %>
 </div>
 
+<!-- CART ITEMS LIST - Displays all items in the shopping cart -->
 <div class="cart-items">
   <% @cart.cart_items.each do |item| %>
     <% next unless item.variant.present? || item.product.present? %>
     <% product = item.variant&.product || item.product %>
     <% next unless product.present? %>
+    <!-- CART ITEM ROW - Individual cart item with image, details, price, quantity, and remove button -->
     <div class="cart-item">
+      <!-- PRODUCT IMAGE - Thumbnail image of the product -->
       <div class="item-image">
         <% if product.primary_image.present? %>
           <%= image_tag product.primary_image.variant(resize_to_limit: [100, 100]), alt: item.product_name, class: "product-image" %>
@@ -23,33 +28,39 @@
         <% end %>
       </div>
 
+      <!-- ITEM DETAILS - Product name, variant info (size/grind), SKU, and stock warnings -->
       <div class="item-details">
         <h3><%= item.product_name %></h3>
 
         <% if item.variant.present? %>
+          <!-- VARIANT INFO - Size and grind for variant products -->
           <p class="variant-info"><%= item.variant.size.humanize %> / <%= item.variant.grind.humanize %></p>
           <p class="sku">SKU: <%= item.variant.sku || "N/A" %></p>
+          <!-- STOCK WARNING - Shows if item is out of stock or low stock -->
           <% if item.variant.out_of_stock? %>
             <p class="stock-warning out-of-stock">⚠ Out of Stock</p>
           <% elsif item.variant.low_stock? %>
             <p class="stock-warning low-stock">⚠ Low Stock - Only <%= item.variant.inventory_quantity %> left</p>
           <% end %>
         <% else %>
+          <!-- SKU FOR SIMPLE PRODUCTS -->
           <p class="sku">SKU: <%= product.sku || "N/A" %></p>
         <% end %>
       </div>
 
+      <!-- ITEM PRICE - Unit price and line subtotal -->
       <div class="item-price">
         <p class="price">₹<%= number_with_precision(item.price, precision: 2) %></p>
         <p class="subtotal">₹<%= number_with_precision(item.price * item.quantity, precision: 2) %></p>
       </div>
 
+      <!-- ITEM QUANTITY - Quantity selector with plus/minus buttons (auto-submits on change) -->
       <div class="item-quantity">
         <%= form_with(url: cart_item_path(item), method: :patch, local: true, class: "quantity-form") do |form| %>
           <% max_quantity = item.variant ? item.variant.inventory_quantity : item.product.inventory_quantity %>
           <div class="quantity-selector">
             <button type="button" class="quantity-btn quantity-btn-minus" onclick="decrementCartQuantity(this, <%= max_quantity %>)">−</button>
-            <%= number_field_tag "quantity", item.quantity, min: 1, max: max_quantity, 
+            <%= number_field_tag "quantity", item.quantity, min: 1, max: max_quantity,
                                  class: "quantity-input",
                                  onchange: "this.form.submit()" %>
             <button type="button" class="quantity-btn quantity-btn-plus" onclick="incrementCartQuantity(this, <%= max_quantity %>)">+</button>
@@ -57,6 +68,7 @@
         <% end %>
       </div>
 
+      <!-- ITEM ACTIONS - Remove item button -->
       <div class="item-actions">
         <%= button_to "Remove", cart_item_path(item), method: :delete,
             class: "btn btn-sm btn-danger",
@@ -66,22 +78,26 @@
   <% end %>
 </div>
 
+<!-- CART SUMMARY - Total price and continue shopping link -->
 <div class="cart-summary">
+  <!-- CART TOTAL - Displays order total amount -->
   <div class="cart-total">
     <h3>Order Total</h3>
     <p class="total-amount">₹<%= number_with_precision(@cart.total, precision: 2) %></p>
   </div>
+  <!-- CART ACTIONS - Continue shopping button -->
   <div class="cart-actions">
-<%= link_to "Continue Shopping", products_path, class: "btn btn-secondary" %>
+ <%= link_to "Continue Shopping", products_path, class: "btn btn-secondary" %>
   </div>
 </div>
 
+<!-- JAVASCRIPT FOR CART QUANTITY SELECTOR -->
 <script>
   // Quantity selector functions for cart updates
   function incrementCartQuantity(button, max) {
     const input = button.parentElement.querySelector('input[type="number"]');
     const current = parseInt(input.value) || 1;
-    
+
     if (current < max) {
       input.value = current + 1;
       input.form.submit();
@@ -92,7 +108,7 @@
     const input = button.parentElement.querySelector('input[type="number"]');
     const min = parseInt(input.min);
     const current = parseInt(input.value) || 1;
-    
+
     if (current > min) {
       input.value = current - 1;
       input.form.submit();
