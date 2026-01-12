@@ -1,6 +1,6 @@
 Rails.application.routes.draw do
-  resource :cart, only: [:show]
-  resources :cart_items, only: [:create, :destroy]
+  resource :cart, only: [ :show ]
+  resources :cart_items, only: [ :create, :update, :destroy ]
   resource :session
   resources :passwords, param: :token
   root "landings#index"
@@ -8,8 +8,14 @@ Rails.application.routes.draw do
   get "/about", to: "landings#about"
   get "/contact", to: "landings#contact"
 
-  resources :products
-  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
+  # Updated products routes with image purge
+  resources :products do
+    member do
+      delete :purge_image
+    end
+  end
+
+  # Define your application routes per the DSL in [https://guides.rubyonrails.org/routing.html](https://guides.rubyonrails.org/routing.html)
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.

@@ -53,11 +53,40 @@ class CartItemsController < ApplicationController
         end
         @cart_item.update(quantity: new_quantity)
       else
-        @cart.cart_items.create!(product_id: params[:product_id], quantity: quantity)
+        @cart.cart_items.create!(product_id: params[:product_id], variant_id: nil, quantity: quantity)
       end
     end
 
     redirect_to cart_path(@cart), notice: "Item added to cart successfully."
+  end
+
+  def update
+    @cart_item = @cart.cart_items.find(params[:id])
+    new_quantity = params[:quantity].to_i
+
+    if new_quantity < 1
+      redirect_to cart_path(@cart), alert: "Quantity must be at least 1."
+      return
+    end
+
+    # Check stock availability
+    if @cart_item.variant
+      unless @cart_item.variant.available_quantity?(new_quantity)
+        redirect_to cart_path(@cart), alert: "Only #{@cart_item.variant.inventory_quantity} available in stock."
+        return
+      end
+    elsif @cart_item.product
+      unless @cart_item.product.inventory_quantity >= new_quantity
+        redirect_to cart_path(@cart), alert: "Only #{@cart_item.product.inventory_quantity} available in stock."
+        return
+      end
+    end
+
+    if @cart_item.update(quantity: new_quantity)
+      redirect_to cart_path(@cart), notice: "Cart updated successfully."
+    else
+      redirect_to cart_path(@cart), alert: "Failed to update cart."
+    end
   end
 
   def destroy

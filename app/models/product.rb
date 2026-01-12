@@ -2,7 +2,10 @@ class Product < ApplicationRecord
   has_many :variants, dependent: :destroy
   accepts_nested_attributes_for :variants,
     allow_destroy: true,
-    reject_if: ->(attrs) { attrs['size'].blank? || attrs['grind'].blank? || attrs['price'].blank? }
+    reject_if: ->(attrs) { attrs["size"].blank? || attrs["grind"].blank? || attrs["price"].blank? }
+
+  # Active Storage attachments
+  has_many_attached :images
 
   enum :roast_level, { dark: 0, light: 1, medium: 2, medium_dark: 3 }
   enum :drinking_preference, { with_milk: 0, with_or_without_milk: 1, without_milk: 2 }
@@ -15,6 +18,8 @@ class Product < ApplicationRecord
   validates :inventory_quantity, presence: true, numericality: { greater_than_or_equal_to: 0 }, if: -> { variants.empty? }
   validates :sku, uniqueness: true, allow_nil: true
   validate :has_price_or_variants
+  validate :image_format
+  validate :image_size
 
   before_validation :normalize_sku, if: -> { sku.present? }
   after_create :generate_sku, if: -> { sku.blank? && variants.empty? }
@@ -31,6 +36,11 @@ class Product < ApplicationRecord
   # Check if product has variants
   def has_variants?
     variants.any?
+  end
+
+  # Get primary image (first product image)
+  def primary_image
+    images.attached? ? images.first : nil
   end
 
   # Check if product is in stock (for simple products)
@@ -68,7 +78,7 @@ class Product < ApplicationRecord
   def generate_sku
     return if variants.any? # Only generate for simple products
 
-    product_name_clean = name.to_s.gsub(/[^a-zA-Z0-9]/, '').upcase
+    product_name_clean = name.to_s.gsub(/[^a-zA-Z0-9]/, "").upcase
     product_code = product_name_clean[0..3] || "PRD"
 
     generated_sku = "#{product_code}-#{id.to_s.rjust(4, '0')}"
@@ -84,6 +94,28 @@ class Product < ApplicationRecord
   # Normalize SKU
   def normalize_sku
     return if sku.blank?
-    self.sku = sku.to_s.upcase.strip.gsub(/\s+/, '-').gsub(/[^a-zA-Z0-9\-]/, '')
+    self.sku = sku.to_s.upcase.strip.gsub(/\s+/, "-").gsub(/[^a-zA-Z0-9\-]/, "")
+  end
+
+  # Validate image format
+  def image_format
+    return unless images.attached?
+
+    images.each do |image|
+      unless image.content_type.in?(%w[image/jpeg image/jpg image/png image/gif image/webp])
+        errors.add(:images, "must be JPEG, PNG, GIF, or WebP")
+      end
+    end
+  end
+
+  # Validate image size (max 5MB per image)
+  def image_size
+    return unless images.attached?
+
+    images.each do |image|
+      if image.byte_size > 5.megabytes
+        errors.add(:images, "must be less than 5MB each")
+      end
+    end
   end
 end

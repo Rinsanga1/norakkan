@@ -5,6 +5,7 @@ class CartItem < ApplicationRecord
 
   validates :quantity, presence: true, numericality: { greater_than: 0 }
   validate :check_inventory_availability
+  validate :product_or_variant_must_be_present
 
   def price
     variant ? variant.price : product.price
@@ -23,6 +24,14 @@ class CartItem < ApplicationRecord
   end
 
   private
+
+  def product_or_variant_must_be_present
+    if product_id.blank? && variant_id.blank?
+      errors.add(:base, "Cart item must have either a product or a variant")
+    elsif product_id.present? && variant_id.present?
+      errors.add(:base, "Cart item cannot have both a product and a variant")
+    end
+  end
 
   def check_inventory_availability
     if variant

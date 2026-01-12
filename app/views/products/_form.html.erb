@@ -1,4 +1,4 @@
-<%= form_with(model: product) do |form| %>
+<%= form_with(model: product, multipart: true) do |form| %>
   <% if product.errors.any? %>
     <div style="color: red; margin-bottom: 20px;">
       <h4>Please fix the following errors:</h4>
@@ -20,6 +20,34 @@
   <div>
     <%= form.label :description %><br>
     <%= form.text_area :description, rows: 4, placeholder: "Describe your product..." %>
+  </div>
+
+  <!-- Product Images Section -->
+  <div id="product-images-section" style="margin: 20px 0;">
+    <h3>Product Images</h3>
+    <p style="color: #666; font-size: 0.9em;">Upload multiple images for this product. All variants will use these product images.</p>
+
+    <div>
+      <%= form.label :images, "Upload Images" %><br>
+      <%= form.file_field :images, multiple: true, accept: "image/jpeg,image/jpg,image/png,image/gif,image/webp", class: "form-control" %>
+      <small style="color: #666;">You can select multiple images. Max 5MB per image.</small>
+    </div>
+
+    <!-- Display existing images -->
+    <% if product.images.attached? %>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;">
+        <% product.images.each_with_index do |image, index| %>
+          <div style="position: relative; border: 1px solid #ddd; padding: 5px; border-radius: 5px;">
+            <%= image_tag image.variant(resize_to_limit: [100, 100]), style: "width: 100px; height: 100px; object-fit: cover; border-radius: 3px;" %>
+            <div style="margin-top: 5px; text-align: center;">
+              <%= link_to "Remove", purge_product_image_path(product, image.id),
+                  method: :delete, data: { confirm: "Are you sure you want to remove this image?" },
+                  style: "color: #dc3545; font-size: 0.8em; text-decoration: underline;" %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
   </div>
 
   <h3>Product Details</h3>
@@ -48,11 +76,12 @@
 
   <div style="margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 5px;">
     <label>
-      <input type="checkbox" id="has_variants_checkbox" name="product[has_variants]" value="true">
+      <input type="checkbox" id="has_variants_checkbox" value="true">
       <strong>This product has variants (different sizes/grinds with different prices)</strong>
     </label>
     <p style="font-size: 0.9em; color: #666; margin-top: 5px;">
       Check this if you want to sell this product in different sizes (250g, 500g, 1000g) and grinds (wholebean, aeropress, etc.) with different prices.
+      <strong>Note:</strong> When using variants, upload images for each variant instead of the product.
     </p>
   </div>
 
@@ -71,7 +100,7 @@
   <div id="variant-product-fields" style="display: none;">
     <h4>Product Variants</h4>
     <p style="color: #666; margin-bottom: 15px;">
-      Add variants for different size and grind combinations. Each variant can have its own price and stock level.
+      Add variants for different size and grind combinations. Each variant can have its own price, stock level, and images.
     </p>
 
     <div id="variants-container">
@@ -97,6 +126,7 @@
       const checkbox = document.getElementById('has_variants_checkbox');
       const simpleFields = document.getElementById('simple-product-fields');
       const variantFields = document.getElementById('variant-product-fields');
+      const productImagesSection = document.getElementById('product-images-section');
       const addVariantBtn = document.getElementById('add-variant-btn');
       const variantsContainer = document.getElementById('variants-container');
 
@@ -148,6 +178,7 @@
                 <input type="number" name="product[variants_attributes][${variantIndex}][inventory_quantity]" min="0" value="0" required>
               </div>
             </div>
+            
             <button type="button" onclick="this.closest('.nested-fields').remove()" style="margin-top: 10px; padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
               Remove Variant
             </button>
@@ -163,6 +194,7 @@
         if (this.checked) {
           simpleFields.style.display = 'none';
           variantFields.style.display = 'block';
+          // Product images section stays visible - variants use product images
 
           // Auto-add first variant form if container is empty
           if (variantsContainer && variantsContainer.children.length === 0) {
@@ -173,6 +205,14 @@
           variantFields.style.display = 'none';
         }
       });
+
+      // Set initial state based on whether product has variants
+      <% if product.has_variants? || product.variants.any? %>
+        checkbox.checked = true;
+        simpleFields.style.display = 'none';
+        variantFields.style.display = 'block';
+        // Product images section stays visible
+      <% end %>
 
       // Handle add variant button
       if (addVariantBtn) {

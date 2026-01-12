@@ -5,6 +5,31 @@ export default class extends Controller {
 
   connect() {
     this.variants = JSON.parse(this.variantsTarget.dataset.variants)
+    this.currentVariant = null
+    
+    // Auto-select first variant
+    if (this.variants.length > 0) {
+      this.selectFirstVariant()
+    }
+  }
+
+  selectFirstVariant() {
+    const firstVariant = this.variants[0]
+    const sizeSelect = this.element.querySelector("#size")
+    const grindSelect = this.element.querySelector("#grind")
+
+    if (sizeSelect && firstVariant.size) {
+      sizeSelect.value = firstVariant.size
+      this.updateSize()
+
+      // Wait a bit for grind options to populate, then select first grind
+      setTimeout(() => {
+        if (grindSelect && firstVariant.grind) {
+          grindSelect.value = firstVariant.grind
+          this.updatePrice()
+        }
+      }, 50)
+    }
   }
 
   updateSize() {
@@ -19,7 +44,7 @@ export default class extends Controller {
       grindSelect.disabled = true
       this.priceTarget.textContent = "--"
       this.variantIdTarget.value = ""
-      this.skuTarget.textContent = "--"
+      if (this.hasSkuTarget) this.skuTarget.textContent = "--"
       this.updateStockStatus(null)
       if (submitButton) submitButton.disabled = true
       return
@@ -63,6 +88,7 @@ export default class extends Controller {
     )
 
     if (variant) {
+      this.currentVariant = variant
       this.priceTarget.textContent = `$${parseFloat(variant.price).toFixed(2)}`
       this.variantIdTarget.value = variant.id
       this.updateStockStatus(variant)
@@ -80,6 +106,7 @@ export default class extends Controller {
 
       if (submitButton) submitButton.disabled = variant.inventory_quantity <= 0
     } else {
+      this.currentVariant = null
       this.priceTarget.textContent = "Not available"
       this.variantIdTarget.value = ""
       if (this.hasSkuTarget) this.skuTarget.textContent = "--"
@@ -87,6 +114,7 @@ export default class extends Controller {
       if (submitButton) submitButton.disabled = true
     }
   }
+
 
   updateStockStatus(variant) {
     const stockText = this.stockTextTarget || this.stockStatusTarget?.querySelector('span')

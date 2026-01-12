@@ -57,11 +57,9 @@ class Variant < ApplicationRecord
   def generate_sku
     return if product.nil?
 
-    # Create base SKU from product name (first 3-4 letters, uppercase, no spaces)
     product_name_clean = product.name.to_s.gsub(/[^a-zA-Z0-9]/, "").upcase
     product_code = product_name_clean[0..3] || "PRD"
 
-    # Add variant codes
     size_code = case size
     when "_250g" then "250"
     when "_500g" then "500"
@@ -70,14 +68,9 @@ class Variant < ApplicationRecord
     end
 
     grind_code = grind.to_s.gsub("_", "").upcase[0..3] || "GRN"
-
-    # Format: PROD-SIZE-GRIND-ID (e.g., ETHI-250-WHOLE-001)
     base_sku = "#{product_code}-#{size_code}-#{grind_code}"
-
-    # Ensure uniqueness by appending variant ID
     generated_sku = "#{base_sku}-#{id.to_s.rjust(3, '0')}"
 
-    # Check if SKU already exists, if so append random suffix
     if Variant.where(sku: generated_sku).where.not(id: id).exists?
       generated_sku = "#{base_sku}-#{id.to_s.rjust(3, '0')}-#{SecureRandom.hex(2).upcase}"
     end
@@ -85,7 +78,7 @@ class Variant < ApplicationRecord
     update_column(:sku, generated_sku)
   end
 
-  # Normalize SKU (uppercase, remove spaces, etc.)
+  # Normalize SKU
   def normalize_sku
     return if sku.blank?
     self.sku = sku.to_s.upcase.strip.gsub(/\s+/, "-").gsub(/[^a-zA-Z0-9\-]/, "")
