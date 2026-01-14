@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_12_045804) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_12_050004) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -56,6 +56,40 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_12_045804) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "order_items", force: :cascade do |t|
+    t.integer "order_id", null: false
+    t.integer "product_id"
+    t.integer "variant_id"
+    t.string "product_name", null: false
+    t.string "variant_info"
+    t.decimal "price", precision: 10, scale: 2, null: false
+    t.integer "quantity", null: false
+    t.decimal "subtotal", precision: 10, scale: 2, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["order_id"], name: "index_order_items_on_order_id"
+    t.index ["product_id"], name: "index_order_items_on_product_id"
+    t.index ["variant_id"], name: "index_order_items_on_variant_id"
+  end
+
+  create_table "orders", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.integer "status", default: 0, null: false
+    t.integer "payment_status", default: 0, null: false
+    t.decimal "subtotal", precision: 10, scale: 2, null: false
+    t.decimal "shipping_cost", precision: 10, scale: 2, default: "0.0"
+    t.decimal "total", precision: 10, scale: 2, null: false
+    t.string "razorpay_order_id"
+    t.string "razorpay_payment_id"
+    t.string "razorpay_signature"
+    t.integer "shipping_address_id"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["shipping_address_id"], name: "index_orders_on_shipping_address_id"
+    t.index ["user_id"], name: "index_orders_on_user_id"
+  end
+
   create_table "products", force: :cascade do |t|
     t.string "name"
     t.string "description"
@@ -82,11 +116,32 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_12_045804) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
+  create_table "shipping_addresses", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "label", default: "Home"
+    t.string "name", null: false
+    t.string "address_line_1", null: false
+    t.string "address_line_2"
+    t.string "city", null: false
+    t.string "state", null: false
+    t.string "postal_code", null: false
+    t.string "country", default: "India"
+    t.string "phone"
+    t.boolean "default", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_shipping_addresses_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email_address", null: false
     t.string "password_digest", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "full_name"
+    t.string "phone"
+    t.boolean "admin", default: false, null: false
+    t.index ["admin"], name: "index_users_on_admin"
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
@@ -109,6 +164,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_12_045804) do
   add_foreign_key "cart_items", "carts"
   add_foreign_key "cart_items", "products"
   add_foreign_key "cart_items", "variants"
+  add_foreign_key "order_items", "orders"
+  add_foreign_key "order_items", "products"
+  add_foreign_key "order_items", "variants"
+  add_foreign_key "orders", "shipping_addresses"
+  add_foreign_key "orders", "users"
   add_foreign_key "sessions", "users"
+  add_foreign_key "shipping_addresses", "users"
   add_foreign_key "variants", "products"
 end

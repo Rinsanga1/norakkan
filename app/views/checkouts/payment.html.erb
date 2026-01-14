@@ -1,0 +1,42 @@
+<div class="razorpay-checkout-container">
+  <h1>Complete Your Payment</h1>
+
+  <div class="payment-details">
+    <p><strong>Order:</strong> <%= @order.display_order_number %></p>
+    <p><strong>Items:</strong> <%= @order.order_items.sum(:quantity) %></p>
+    <p><strong>Shipping:</strong>
+      <% if @order.shipping_cost.zero? %>
+        FREE
+      <% else %>
+        ₹<%= number_with_precision(@order.shipping_cost, precision: 2) %>
+      <% end %>
+    </p>
+    <p class="total"><strong>Total:</strong> ₹<%= number_with_precision(@order.total, precision: 2) %></p>
+    <p class="shipping-to">
+      Shipping to: <%= @order.shipping_address.name %><br>
+      <%= @order.shipping_address.address_line_1 %>, <%= @order.shipping_address.city %>
+    </p>
+  </div>
+
+  <form action="https://api.razorpay.com/v1/checkout" method="POST">
+    <script
+      src="https://checkout.razorpay.com/v1/checkout.js"
+      data-key="<%= ENV.fetch('RAZORPAY_KEY_ID', 'rzp_test_XXXXXXXXXX') %>"
+      data-amount="<%= (@order.total * 100).to_i %>"
+      data-currency="INR"
+      data-name="Norakkan"
+      data-description="Order <%= @order.display_order_number %>"
+      data-prefill.name="<%= @order.shipping_address.name %>"
+      data-prefill.email="<%= @order.user.email_address %>"
+      data-prefill.contact="<%= @order.shipping_address.phone %>"
+      data-notes.shopping_order_id="<%= @order.display_order_number %>"
+      data-order_id="<%= @razorpay_order_id %>"
+      data-theme.color="#3399cc">
+    ></script>
+  </form>
+
+  <div class="payment-info">
+    <p>🔒 Secure payment powered by Razorpay</p>
+    <p>Test Mode - No real money is charged</p>
+  </div>
+</div>

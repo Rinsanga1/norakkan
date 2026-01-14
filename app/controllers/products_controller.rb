@@ -56,7 +56,7 @@ class ProductsController < ApplicationController
   private
 
   def product_params
-  params.require(:product).permit(
+  permitted = params.require(:product).permit(
     :name,
     :description,
     :roast_level,
@@ -67,9 +67,12 @@ class ProductsController < ApplicationController
     :price,
     :inventory_quantity,
     :sku,
-    # Remove :has_variants - it's just a UI checkbox, not a database field
-    images: [],  # Allow multiple images (for simple products)
+    images: [],
     variants_attributes: [ :id, :size, :grind, :price, :inventory_quantity, :sku, :_destroy ]
   )
+
+  permitted.delete(:images) if permitted[:images].blank? || permitted[:images].all?(&:blank?)
+
+  permitted
   end
 end

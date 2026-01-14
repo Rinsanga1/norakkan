@@ -49,7 +49,7 @@
             <div style="margin-top: 5px; text-align: center;">
               <!-- REMOVE IMAGE BUTTON -->
               <%= link_to "Remove", purge_image_product_path(product, image_id: image.id),
-                  method: :delete, data: { confirm: "Are you sure you want to remove this image?" },
+                  data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to remove this image?" },
                   style: "color: #dc3545; font-size: 0.8em; text-decoration: underline;" %>
             </div>
           </div>
@@ -123,16 +123,63 @@
       Add variants for different size and grind combinations. Each variant can have its own price, stock level, and images.
     </p>
 
-    <!-- VARIANTS CONTAINER - Holds all variant form cards -->
+    <div data-controller="bulk-variants" data-bulk-variants-start-index-value="<%= @product.variants.size %>" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+      <h5 style="margin-top: 0; color: #333;">Quick Add Variants</h5>
+      <p style="color: #666; font-size: 0.9em; margin-bottom: 15px;">
+        Select a size and price, then check multiple grinds to create several variants at once.
+      </p>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+        <div>
+          <label style="display: block; margin-bottom: 5px; font-weight: 500;">Size *</label>
+          <select data-bulk-variants-target="size" data-action="change->bulk-variants#updatePreview" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            <option value="">Select Size</option>
+            <option value="_250g">250g</option>
+            <option value="_500g">500g</option>
+            <option value="_1000g">1000g</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="display: block; margin-bottom: 5px; font-weight: 500;">Price *</label>
+          <input type="number" data-bulk-variants-target="price" data-action="input->bulk-variants#updatePreview" step="0.01" min="0" placeholder="0.00" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+
+        <div>
+          <label style="display: block; margin-bottom: 5px; font-weight: 500;">Stock Quantity *</label>
+          <input type="number" data-bulk-variants-target="inventory" data-action="input->bulk-variants#updatePreview" min="0" value="0" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+      </div>
+
+      <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 10px; font-weight: 500;">Select Grinds *</label>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+          <% Variant.grinds.keys.each do |grind| %>
+            <label style="display: flex; align-items: center; padding: 8px; background: white; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; transition: all 0.2s;">
+              <input type="checkbox" value="<%= grind %>" data-bulk-variants-target="grindCheckbox" data-action="change->bulk-variants#updatePreview" style="margin-right: 8px;">
+              <span><%= grind.humanize %></span>
+            </label>
+          <% end %>
+        </div>
+      </div>
+
+      <div data-bulk-variants-target="preview" style="margin-bottom: 15px;">
+        <p style="color: #666;">Select size, price, and at least one grind to see preview...</p>
+      </div>
+
+      <button type="button" data-action="click->bulk-variants#addVariants" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
+        + Add Selected Variants
+      </button>
+    </div>
+
     <div id="variants-container">
       <%= form.fields_for :variants do |variant_form| %>
         <%= render "variant_fields", form: variant_form %>
       <% end %>
     </div>
 
-    <!-- ADD VARIANT BUTTON - Dynamically adds new variant form -->
-    <button type="button" id="add-variant-btn" style="margin-top: 10px; padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
-      + Add Variant
+    <button type="button" id="add-variant-btn" style="margin-top: 10px; padding: 8px 15px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">
+      + Add Single Variant Manually
     </button>
   </div>
 
@@ -145,8 +192,15 @@
 <!-- JAVASCRIPT FOR VARIANT TOGGLE AND FORM GENERATION -->
 <script>
   (function() {
+    let isInitialized = false;
+
     // Wait for DOM to be ready
     function initVariantToggle() {
+      if (isInitialized) {
+        return;
+      }
+      isInitialized = true;
+
       const checkbox = document.getElementById('has_variants_checkbox');
       const simpleFields = document.getElementById('simple-product-fields');
       const variantFields = document.getElementById('variant-product-fields');
@@ -155,81 +209,58 @@
 
       if (!checkbox || !simpleFields || !variantFields) {
         console.error('Required elements not found');
+        isInitialized = false;
         return;
       }
 
-      // Function to add a variant form
       function addVariantForm() {
-        const variantIndex = variantsContainer.children.length;
+        const variantIndex = variantsContainer.children.length + <%= @product.variants.size %>;
         const variantHtml = `
           <div class="nested-fields" style="border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 5px; background: white;">
             <h5>Variant ${variantIndex + 1}</h5>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-              <!-- VARIANT SIZE SELECTOR -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 15px;">
               <div>
                 <label>Size</label>
-                <select name="product[variants_attributes][${variantIndex}][size]" required>
+                <select name="product[variants_attributes][${variantIndex}][size]" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                   <option value="">Select Size</option>
                   <option value="_250g">250g</option>
                   <option value="_500g">500g</option>
                   <option value="_1000g">1000g</option>
                 </select>
               </div>
-              <!-- VARIANT GRIND SELECTOR -->
               <div>
                 <label>Grind</label>
-                <select name="product[variants_attributes][${variantIndex}][grind]" required>
+                <select name="product[variants_attributes][${variantIndex}][grind]" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                   <option value="">Select Grind</option>
-                  <option value="wholebean">Wholebean</option>
-                  <option value="aeropress">Aeropress</option>
-                  <option value="channi">Channi</option>
-                  <option value="coffee_filter">Coffee Filter</option>
-                  <option value="cold_brew">Cold Brew</option>
-                  <option value="commercial_espresso">Commercial Espresso</option>
-                  <option value="french_press">French Press</option>
-                  <option value="home_espresso">Home Espresso</option>
-                  <option value="inverted_aeropress">Inverted Aeropress</option>
-                  <option value="moka_pot">Moka Pot</option>
-                  <option value="pourover">Pourover</option>
-                  <option value="south_indian_filter">South Indian Filter</option>
+                  <% Variant.grinds.keys.each do |grind| %>
+                    <option value="<%= grind %>"><%= grind.humanize %></option>
+                  <% end %>
                 </select>
               </div>
-              <!-- VARIANT PRICE INPUT -->
               <div>
                 <label>Price</label>
-                <input type="number" name="product[variants_attributes][${variantIndex}][price]" step="0.01" min="0" placeholder="0.00" required>
+                <input type="number" name="product[variants_attributes][${variantIndex}][price]" step="0.01" min="0" placeholder="0.00" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
               </div>
-              <!-- VARIANT STOCK QUANTITY INPUT -->
               <div>
                 <label>Stock Quantity</label>
-                <input type="number" name="product[variants_attributes][${variantIndex}][inventory_quantity]" min="0" value="0" required>
+                <input type="number" name="product[variants_attributes][${variantIndex}][inventory_quantity]" min="0" value="0" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+              </div>
+              <div>
+                <button type="button" onclick="this.closest('.nested-fields').remove()" style="padding: 8px 15px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                  Remove
+                </button>
               </div>
             </div>
-
-            <!-- REMOVE VARIANT BUTTON -->
-            <button type="button" onclick="this.closest('.nested-fields').remove()" style="margin-top: 10px; padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
-              Remove Variant
-            </button>
           </div>
         `;
         variantsContainer.insertAdjacentHTML('beforeend', variantHtml);
       }
 
-      // Handle checkbox change - toggles between simple and variant forms
       checkbox.addEventListener('change', function() {
-        console.log('Checkbox changed:', this.checked);
-
         if (this.checked) {
-          // Show variant fields, hide simple fields
           simpleFields.style.display = 'none';
           variantFields.style.display = 'block';
-
-          // Auto-add first variant form if container is empty
-          if (variantsContainer && variantsContainer.children.length === 0) {
-            addVariantForm();
-          }
         } else {
-          // Show simple fields, hide variant fields
           simpleFields.style.display = 'block';
           variantFields.style.display = 'none';
         }
@@ -251,16 +282,12 @@
       }
     }
 
-    // Try multiple ways to ensure script runs
+    // Initialize once when DOM is ready
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', initVariantToggle);
     } else {
       initVariantToggle();
     }
-
-    // Also handle Turbo navigation (if using Turbo)
-    document.addEventListener('turbo:load', initVariantToggle);
-    document.addEventListener('turbo:render', initVariantToggle);
   })();
 </script>
 

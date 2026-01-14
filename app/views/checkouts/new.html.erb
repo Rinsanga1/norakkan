@@ -1,0 +1,206 @@
+<div class="checkout-container">
+  <h1>Checkout</h1>
+
+  <% if @checkout_form.errors.any? %>
+    <div class="alert alert-danger">
+      <h3>Please fix the following errors:</h3>
+      <ul>
+        <% @checkout_form.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <%= form_with(model: @checkout_form, url: checkout_path, local: true) do |form| %>
+    <div class="checkout-sections">
+      <!-- SHIPPING ADDRESS SECTION -->
+      <div class="checkout-section">
+        <h2>Shipping Address</h2>
+
+        <!-- SHOW SAVED ADDRESSES -->
+        <% if current_user.shipping_addresses.any? %>
+          <div class="saved-addresses">
+            <h3>Select a saved address</h3>
+            <% current_user.shipping_addresses.recent.each do |address| %>
+              <div class="address-card <%= 'selected' if address.default? %>">
+                <div class="address-radio">
+                  <%= form.radio_button :use_saved_address, 'true',
+                      checked: address.default?,
+                      id: "address_#{address.id}",
+                      onclick: "selectAddress(#{address.id})" %>
+                  <%= form.hidden_field :shipping_address_id, value: address.id, disabled: !address.default? %>
+                  <label for="address_<%= address.id %>">
+                    <strong><%= address.label %></strong>
+                    <%= address.default? ? '(Default)' : '' %>
+                  </label>
+                </div>
+
+                <div class="address-details">
+                  <p><%= address.name %></p>
+                  <p><%= address.address_line_1 %></p>
+                  <% if address.address_line_2.present? %>
+                    <p><%= address.address_line_2 %></p>
+                  <% end %>
+                  <p><%= address.city %>, <%= address.state %> <%= address.postal_code %></p>
+                  <p><%= address.phone %></p>
+                </div>
+
+                <div class="address-actions">
+                  <%= link_to "Edit", edit_settings_shipping_address_path(address), class: "btn-sm" %>
+                  <%= link_to "Delete", settings_shipping_address_path(address),
+                      method: :delete,
+                      data: { confirm: "Delete this address?" },
+                      class: "btn-sm btn-danger" %>
+                </div>
+              </div>
+            <% end %>
+
+            <!-- ADD NEW ADDRESS BUTTON -->
+            <div class="add-new-address">
+              <%= form.radio_button :use_saved_address, 'false',
+                  checked: false,
+                  id: "new_address",
+                  onclick: "showNewAddressForm()" %>
+              <label for="new_address">
+                <strong>Use a new address</strong>
+              </label>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- NEW ADDRESS FORM (hidden by default) -->
+        <div id="new-address-form" style="display: <%= current_user.shipping_addresses.any? ? 'none' : 'block' %>;">
+          <h3>Enter new shipping address</h3>
+
+          <div class="form-field">
+            <%= form.label :address_label, "Address Label (for future orders)" %>
+            <%= form.text_field :address_label, placeholder: "e.g., Home, Work" %>
+          </div>
+
+          <div class="form-field">
+            <label>
+              <%= form.check_box :save_address, value: '1', checked: true %>
+              <span>Save this address for future orders</span>
+            </label>
+          </div>
+
+          <!-- Address fields -->
+          <div class="form-field">
+            <%= form.label :name, "Full Name" %>
+            <%= form.text_field :name, required: true, placeholder: "John Doe" %>
+          </div>
+
+          <div class="form-field">
+            <%= form.label :address_line_1, "Address" %>
+            <%= form.text_field :address_line_1, required: true, placeholder: "123 Main Street" %>
+          </div>
+
+          <div class="form-field">
+            <%= form.label :address_line_2, "Apartment, suite, etc. (optional)" %>
+            <%= form.text_field :address_line_2, placeholder: "Apt 4B" %>
+          </div>
+
+          <div class="form-field">
+            <%= form.label :city, "City" %>
+            <%= form.text_field :city, required: true, placeholder: "Mumbai" %>
+          </div>
+
+          <div class="form-field">
+            <%= form.label :state, "State" %>
+            <%= form.text_field :state, required: true, placeholder: "Maharashtra" %>
+          </div>
+
+          <div class="form-field">
+            <%= form.label :postal_code, "PIN Code" %>
+            <%= form.text_field :postal_code, required: true, placeholder: "400001" %>
+          </div>
+
+          <div class="form-field">
+            <%= form.label :phone, "Phone Number" %>
+            <%= form.telephone_field :phone, required: true, placeholder: "+91 98765 43210" %>
+          </div>
+        </div>
+
+        <!-- ORDER NOTES -->
+        <div class="form-field">
+          <%= form.label :notes, "Order Notes (optional)" %>
+          <%= form.text_area :notes, rows: 3, placeholder: "Special instructions for delivery..." %>
+        </div>
+      </div>
+
+      <!-- ORDER SUMMARY SECTION -->
+      <div class="checkout-section order-summary">
+        <h2>Order Summary</h2>
+
+        <!-- ITEMS LIST -->
+        <div class="order-items">
+          <% @order.order_items.each do |item| %>
+            <div class="order-item">
+              <div class="item-info">
+                <h3><%= item.product_name %></h3>
+                <% if item.variant_info.present? %>
+                  <p class="variant-info"><%= item.variant_info %></p>
+                <% end %>
+              </div>
+              <div class="item-quantity-price">
+                <span>×<%= item.quantity %></span>
+                <span>₹<%= number_with_precision(item.subtotal, precision: 2) %></span>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <!-- TOTALS -->
+        <div class="order-totals">
+          <div class="total-row">
+            <span>Subtotal</span>
+            <span>₹<%= number_with_precision(@order.subtotal, precision: 2) %></span>
+          </div>
+
+          <div class="total-row">
+            <span>Shipping</span>
+            <span>
+              <% if @order.shipping_cost.zero? %>
+                FREE
+              <% else %>
+                ₹<%= number_with_precision(@order.shipping_cost, precision: 2) %>
+              <% end %>
+            </span>
+          </div>
+
+          <div class="total-row total-row-final">
+            <span>Total</span>
+            <span>₹<%= number_with_precision(@order.total, precision: 2) %></span>
+          </div>
+        </div>
+
+        <!-- PAY BUTTON -->
+        <%= form.submit "Continue to Payment", class: "btn btn-primary btn-large" %>
+
+        <p class="payment-info">
+          <small>🔒 Secure checkout powered by Norakkan</small><br>
+          <small>Payment processed by Razorpay</small>
+        </p>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<script>
+  function selectAddress(addressId) {
+    document.getElementById('new-address-form').style.display = 'none';
+    document.querySelectorAll('input[name="checkout_form[shipping_address_id]"]').forEach(el => {
+      el.disabled = true;
+    });
+    document.querySelector(`input[name="checkout_form[shipping_address_id]"][value="${addressId}"]`).disabled = false;
+  }
+
+  function showNewAddressForm() {
+    document.getElementById('new-address-form').style.display = 'block';
+    document.querySelectorAll('input[name="checkout_form[shipping_address_id]"]').forEach(el => {
+      el.disabled = true;
+    });
+  }
+</script>
+
