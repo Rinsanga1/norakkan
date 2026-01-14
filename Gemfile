@@ -41,7 +41,7 @@ gem "thruster", require: false
 gem "image_processing", "~> 1.2"
 
   # Money and currency formatting
-  gem "money-rails", "~> 1.14"
+  gem "money-rails", "~> 2.0"
 
   # Razorpay payment integration
   gem "razorpay"
