@@ -1,0 +1,23 @@
+one:
+  user: one
+  label: Home
+  name: Test User
+  address_line_1: 123 Test Street
+  city: Test City
+  state: Test State
+  postal_code: 123456
+  phone: '1234567890'
+  country: India
+  default: true
+
+two:
+  user: one
+  label: Work
+  name: Test User
+  address_line_1: 456 Work Avenue
+  city: Work City
+  state: Work State
+  postal_code: 654321
+  phone: '0987654321'
+  country: India
+  default: false

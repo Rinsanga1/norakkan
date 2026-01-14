@@ -1,0 +1,89 @@
+<!-- ORDER DETAILS PAGE -->
+<div class="order-details-page">
+  <div class="breadcrumbs">
+    <%= link_to "Orders", orders_path %> &gt; Order Details
+  </div>
+
+  <h1>Order <%= @order.display_order_number %></h1>
+
+  <!-- Similar to confirmation page -->
+  <div class="order-details">
+    <div class="order-info">
+      <h2>Order <%= @order.display_order_number %></h2>
+      <p>Placed on <%= @order.created_at.strftime("%B %d, %Y at %I:%M %p") %></p>
+
+      <div class="order-status">
+        <span class="status-badge status-<%= @order.status %>">
+          <%= @order.status.humanize %>
+        </span>
+        <span class="payment-badge">
+          Payment: <%= @order.payment_status.humanize %>
+        </span>
+      </div>
+    </div>
+
+    <!-- ORDER ITEMS -->
+    <div class="order-items-list">
+      <h3>Items</h3>
+      <% @order.order_items.each do |item| %>
+        <div class="item-row">
+          <div class="item-details">
+            <h4><%= item.product_name %></h4>
+            <% if item.variant_info.present? %>
+              <p class="variant-info"><%= item.variant_info %></p>
+            <% end %>
+            <p>Qty: <%= item.quantity %></p>
+          </div>
+          <div class="item-price">
+            <p>₹<%= number_with_precision(item.subtotal, precision: 2) %></p>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- TOTALS -->
+    <div class="order-totals">
+      <div class="total-row">
+        <span>Subtotal</span>
+        <span>₹<%= number_with_precision(@order.subtotal, precision: 2) %></span>
+      </div>
+      <div class="total-row">
+        <span>Shipping</span>
+        <span>
+          <% if @order.shipping_cost.zero? %>
+            FREE
+          <% else %>
+            ₹<%= number_with_precision(@order.shipping_cost, precision: 2) %>
+          <% end %>
+        </span>
+      </div>
+      <div class="total-row total-row-final">
+        <span>Total</span>
+        <span>₹<%= number_with_precision(@order.total, precision: 2) %></span>
+      </div>
+    </div>
+
+    <!-- SHIPPING INFO -->
+    <div class="shipping-info">
+      <h3>Shipping Address</h3>
+      <p>
+        <strong><%= @order.shipping_address.name %></strong><br>
+        <%= @order.shipping_address.address_line_1 %><br>
+        <% if @order.shipping_address.address_line_2.present? %>
+          <%= @order.shipping_address.address_line_2 %><br>
+        <% end %>
+        <%= @order.shipping_address.city %>, <%= @order.shipping_address.state %> <%= @order.shipping_address.postal_code %><br>
+        <%= @order.shipping_address.country %>
+      </p>
+      <% if @order.shipping_address.phone.present? %>
+        <p><%= @order.shipping_address.phone %></p>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="order-details-actions">
+    <%= link_to "Back to Orders", orders_path, class: "btn btn-secondary" %>
+    <%= link_to "Continue Shopping", products_path, class: "btn btn-primary" %>
+  </div>
+</div>

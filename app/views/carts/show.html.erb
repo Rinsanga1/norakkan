@@ -85,9 +85,10 @@
     <h3>Order Total</h3>
     <p class="total-amount">₹<%= number_with_precision(@cart.total, precision: 2) %></p>
   </div>
-  <!-- CART ACTIONS - Continue shopping button -->
+  <!-- CART ACTIONS - Continue shopping and checkout buttons -->
   <div class="cart-actions">
  <%= link_to "Continue Shopping", products_path, class: "btn btn-secondary" %>
+ <%= link_to "Proceed to Checkout", new_checkout_path, class: "btn btn-primary" %>
   </div>
 </div>
 
