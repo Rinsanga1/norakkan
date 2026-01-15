@@ -1,0 +1,123 @@
+<div class="orders-container">
+  <div class="page-header">
+    <h1>Orders Management</h1>
+    <div class="header-actions">
+      <%= link_to "Export CSV", export_admin_orders_path(
+        start_date: @start_date,
+        end_date: @end_date,
+        status: @status_filter,
+        payment_status: @payment_status_filter,
+        search: @search
+      ), class: "btn btn-secondary" %>
+      <%= link_to "Dashboard", admin_root_path, class: "btn btn-primary" %>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <%= form_with url: admin_orders_path, method: :get, class: "filters-form" do |f| %>
+      <div class="filter-row">
+        <div class="filter-group">
+          <label for="search">Search</label>
+          <%= f.text_field :search, value: @search, placeholder: "Order ID, Email, or Name" %>
+        </div>
+
+        <div class="filter-group">
+          <label for="status">Status</label>
+          <%= f.select :status, options_for_select([
+            ['All Statuses', ''],
+            ['Pending', 'pending'],
+            ['Paid', 'paid'],
+            ['Processing', 'processing'],
+            ['Shipped', 'shipped'],
+            ['Delivered', 'delivered'],
+            ['Cancelled', 'cancelled']
+          ], @status_filter), {}, { class: "filter-select" } %>
+        </div>
+
+        <div class="filter-group">
+          <label for="payment_status">Payment Status</label>
+          <%= f.select :payment_status, options_for_select([
+            ['All Payments', ''],
+            ['Unpaid', 'unpaid'],
+            ['Paid', 'paid'],
+            ['Failed', 'failed'],
+            ['Refunded', 'refunded']
+          ], @payment_status_filter), {}, { class: "filter-select" } %>
+        </div>
+
+        <div class="filter-group">
+          <label for="start_date">From Date</label>
+          <%= f.date_field :start_date, value: @start_date %>
+        </div>
+
+        <div class="filter-group">
+          <label for="end_date">To Date</label>
+          <%= f.date_field :end_date, value: @end_date %>
+        </div>
+
+        <div class="filter-actions">
+          <%= f.submit "Filter", class: "btn btn-primary" %>
+          <%= link_to "Clear", admin_orders_path, class: "btn btn-secondary" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Orders Table -->
+  <div class="orders-table-container">
+    <table class="orders-table">
+      <thead>
+        <tr>
+          <th>Order #</th>
+          <th>Customer</th>
+          <th>Date</th>
+          <th>Total</th>
+          <th>Status</th>
+          <th>Payment</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @orders.each do |order| %>
+          <tr id="order_<%= order.id %>">
+            <td><%= order.display_order_number %></td>
+            <td>
+              <div class="customer-info">
+                <div class="customer-name"><%= order.user.name %></div>
+                <div class="customer-email"><%= order.user.email_address %></div>
+              </div>
+            </td>
+            <td><%= order.created_at.strftime("%b %d, %Y %H:%M") %></td>
+            <td>₹<%= number_with_delimiter(order.total.to_i, delimiter: ',') %></td>
+            <td>
+              <span class="status-badge status-<%= order.status %>">
+                <%= order.status.titleize %>
+              </span>
+            </td>
+            <td>
+              <span class="status-badge payment-<%= order.payment_status %>">
+                <%= order.payment_status.titleize %>
+              </span>
+            </td>
+            <td class="actions">
+              <%= link_to "View", admin_order_path(order), class: "btn btn-sm btn-primary" %>
+              <%= link_to "Edit Status", admin_order_path(order), class: "btn btn-sm btn-secondary" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination-container">
+    <%= paginate @orders %>
+  </div>
+
+  <% if @orders.empty? %>
+    <div class="empty-state">
+      <p>No orders found matching your criteria.</p>
+    </div>
+  <% end %>
+</div>

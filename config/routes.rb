@@ -32,5 +32,20 @@ Rails.application.routes.draw do
     end
   end
 
+  namespace :admin do
+    root "dashboard#index"
+    resources :orders, only: [ :index, :show, :update ] do
+      collection do
+        get :export
+      end
+    end
+    resources :users, only: [ :index, :show ] do
+      collection do
+        get :export
+      end
+    end
+    get "analytics", to: "dashboard#analytics"
+  end
+
   get "up" => "rails/health#show", as: :rails_health_check
 end

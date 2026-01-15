@@ -1,0 +1,12 @@
+Hi <%= @user.name %>,
+
+Your order <%= @order.display_order_number %> payment status has been updated.
+
+Order Details:
+Payment Status: <%= @order.payment_status.titleize %>
+Order Status: <%= @order.status.titleize %>
+Total: ₹<%= number_with_delimiter(@order.total, delimiter: ',') %>
+
+You can track your order status by logging into your account.
+
+Thank you for shopping with Norakkan!

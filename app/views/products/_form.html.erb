@@ -123,16 +123,18 @@
       Add variants for different size and grind combinations. Each variant can have its own price, stock level, and images.
     </p>
 
-    <div data-controller="bulk-variants" data-bulk-variants-start-index-value="<%= @product.variants.size %>" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-      <h5 style="margin-top: 0; color: #333;">Quick Add Variants</h5>
+    <!-- BULK VARIANT CREATOR -->
+    <div data-controller="bulk-variants" data-bulk-variants-start-index-value="<%= @product.variants.size %>" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px dashed #007bff;">
+      <h5 style="margin-top: 0; color: #333;">⚡ Quick Add Variants</h5>
       <p style="color: #666; font-size: 0.9em; margin-bottom: 15px;">
-        Select a size and price, then check multiple grinds to create several variants at once.
+        <strong>Optional tool:</strong> Select a size and price, then check multiple grinds to quickly add several variants at once. This is just a helper - you can skip it and add variants manually below.
       </p>
 
       <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+        <!-- SIZE SELECTOR -->
         <div>
-          <label style="display: block; margin-bottom: 5px; font-weight: 500;">Size *</label>
-          <select data-bulk-variants-target="size" data-action="change->bulk-variants#updatePreview" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: 500;">Size</label>
+          <select data-bulk-variants-target="size" data-action="change->bulk-variants#updatePreview" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
             <option value="">Select Size</option>
             <option value="_250g">250g</option>
             <option value="_500g">500g</option>
@@ -140,19 +142,22 @@
           </select>
         </div>
 
+        <!-- PRICE INPUT -->
         <div>
-          <label style="display: block; margin-bottom: 5px; font-weight: 500;">Price *</label>
+          <label style="display: block; margin-bottom: 5px; font-weight: 500;">Price</label>
           <input type="number" data-bulk-variants-target="price" data-action="input->bulk-variants#updatePreview" step="0.01" min="0" placeholder="0.00" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
         </div>
 
+        <!-- INVENTORY INPUT -->
         <div>
-          <label style="display: block; margin-bottom: 5px; font-weight: 500;">Stock Quantity *</label>
+          <label style="display: block; margin-bottom: 5px; font-weight: 500;">Stock Quantity</label>
           <input type="number" data-bulk-variants-target="inventory" data-action="input->bulk-variants#updatePreview" min="0" value="0" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
         </div>
       </div>
 
+      <!-- GRIND CHECKBOXES -->
       <div style="margin-bottom: 15px;">
-        <label style="display: block; margin-bottom: 10px; font-weight: 500;">Select Grinds *</label>
+        <label style="display: block; margin-bottom: 10px; font-weight: 500;">Select Grinds</label>
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
           <% Variant.grinds.keys.each do |grind| %>
             <label style="display: flex; align-items: center; padding: 8px; background: white; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; transition: all 0.2s;">
@@ -163,14 +168,27 @@
         </div>
       </div>
 
+      <!-- PREVIEW -->
       <div data-bulk-variants-target="preview" style="margin-bottom: 15px;">
-        <p style="color: #666;">Select size, price, and at least one grind to see preview...</p>
+        <p style="color: #666; font-style: italic;">Select size, price, and at least one grind to see preview...</p>
       </div>
 
+      <!-- ADD VARIANTS BUTTON -->
       <button type="button" data-action="click->bulk-variants#addVariants" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
-        + Add Selected Variants
+        ⚡ Add Selected Variants
       </button>
+      <small style="display: block; margin-top: 8px; color: #666;">
+        This will add the variants to the form below. You can then edit them individually before saving.
+      </small>
     </div>
+
+    <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
+
+    <!-- EXISTING VARIANTS CONTAINER -->
+    <h5>Variants List</h5>
+    <p style="color: #666; font-size: 0.9em; margin-bottom: 15px;">
+      These are the actual variants that will be saved when you submit the form. You can add them using the quick tool above or manually one by one.
+    </p>
 
     <div id="variants-container">
       <%= form.fields_for :variants do |variant_form| %>
@@ -178,7 +196,15 @@
       <% end %>
     </div>
 
-    <button type="button" id="add-variant-btn" style="margin-top: 10px; padding: 8px 15px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">
+    <% if @product.variants.empty? %>
+      <div id="no-variants-message" style="padding: 20px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 5px; text-align: center; color: #856404;">
+        <strong>⚠️ No variants added yet</strong><br>
+        <small>Use the quick add tool above or click the button below to add your first variant.</small>
+      </div>
+    <% end %>
+
+    <!-- MANUAL ADD VARIANT BUTTON -->
+    <button type="button" id="add-variant-btn" style="margin-top: 15px; padding: 8px 15px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">
       + Add Single Variant Manually
     </button>
   </div>
@@ -192,35 +218,43 @@
 <!-- JAVASCRIPT FOR VARIANT TOGGLE AND FORM GENERATION -->
 <script>
   (function() {
-    let isInitialized = false;
+    let initialized = false;
 
-    // Wait for DOM to be ready
     function initVariantToggle() {
-      if (isInitialized) {
-        return;
-      }
-      isInitialized = true;
+      if (initialized) return;
+      initialized = true;
 
       const checkbox = document.getElementById('has_variants_checkbox');
       const simpleFields = document.getElementById('simple-product-fields');
       const variantFields = document.getElementById('variant-product-fields');
       const addVariantBtn = document.getElementById('add-variant-btn');
       const variantsContainer = document.getElementById('variants-container');
+      const noVariantsMessage = document.getElementById('no-variants-message');
 
       if (!checkbox || !simpleFields || !variantFields) {
         console.error('Required elements not found');
-        isInitialized = false;
         return;
       }
 
+      // Function to hide "no variants" message if variants exist
+      function updateNoVariantsMessage() {
+        if (noVariantsMessage) {
+          const hasVariants = variantsContainer.querySelectorAll('.nested-fields').length > 0;
+          noVariantsMessage.style.display = hasVariants ? 'none' : 'block';
+        }
+      }
+
+      // Function to add a single variant form manually
       function addVariantForm() {
-        const variantIndex = variantsContainer.children.length + <%= @product.variants.size %>;
+        const existingVariants = variantsContainer.querySelectorAll('.nested-fields').length;
+        const variantIndex = existingVariants + <%= @product.variants.size %>;
+
         const variantHtml = `
           <div class="nested-fields" style="border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 5px; background: white;">
-            <h5>Variant ${variantIndex + 1}</h5>
+            <h5>Variant ${existingVariants + 1}</h5>
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 15px;">
               <div>
-                <label>Size</label>
+                <label>Size *</label>
                 <select name="product[variants_attributes][${variantIndex}][size]" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                   <option value="">Select Size</option>
                   <option value="_250g">250g</option>
@@ -229,7 +263,7 @@
                 </select>
               </div>
               <div>
-                <label>Grind</label>
+                <label>Grind *</label>
                 <select name="product[variants_attributes][${variantIndex}][grind]" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                   <option value="">Select Grind</option>
                   <% Variant.grinds.keys.each do |grind| %>
@@ -238,15 +272,15 @@
                 </select>
               </div>
               <div>
-                <label>Price</label>
+                <label>Price *</label>
                 <input type="number" name="product[variants_attributes][${variantIndex}][price]" step="0.01" min="0" placeholder="0.00" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
               </div>
               <div>
-                <label>Stock Quantity</label>
+                <label>Stock *</label>
                 <input type="number" name="product[variants_attributes][${variantIndex}][inventory_quantity]" min="0" value="0" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
               </div>
               <div>
-                <button type="button" onclick="this.closest('.nested-fields').remove()" style="padding: 8px 15px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                <button type="button" onclick="this.closest('.nested-fields').remove(); updateVariantCount();" style="padding: 8px 15px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
                   Remove
                 </button>
               </div>
@@ -254,8 +288,13 @@
           </div>
         `;
         variantsContainer.insertAdjacentHTML('beforeend', variantHtml);
+        updateNoVariantsMessage();
       }
 
+      // Make updateVariantCount available globally
+      window.updateVariantCount = updateNoVariantsMessage;
+
+      // Handle checkbox change
       checkbox.addEventListener('change', function() {
         if (this.checked) {
           simpleFields.style.display = 'none';
@@ -266,23 +305,25 @@
         }
       });
 
-      // Set initial state based on whether product has variants
+      // Set initial state
       <% if product.has_variants? || product.variants.any? %>
         checkbox.checked = true;
         simpleFields.style.display = 'none';
         variantFields.style.display = 'block';
       <% end %>
 
-      // Handle add variant button click
+      // Handle manual add variant button
       if (addVariantBtn) {
         addVariantBtn.addEventListener('click', function(e) {
           e.preventDefault();
           addVariantForm();
         });
       }
+
+      // Initial check for no variants message
+      updateNoVariantsMessage();
     }
 
-    // Initialize once when DOM is ready
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', initVariantToggle);
     } else {
@@ -290,5 +331,3 @@
     }
   })();
 </script>
-
-

@@ -1,0 +1,98 @@
+<div class="users-container">
+  <div class="page-header">
+    <h1>Users Management</h1>
+    <div class="header-actions">
+      <%= link_to "Export CSV", export_admin_users_path, class: "btn btn-secondary" %>
+      <%= link_to "Dashboard", admin_root_path, class: "btn btn-primary" %>
+    </div>
+  </div>
+
+  <!-- Search and Filters -->
+  <div class="filters-section">
+    <%= form_with url: admin_users_path, method: :get, class: "filters-form" do |f| %>
+      <div class="filter-row">
+        <div class="filter-group">
+          <label for="search">Search Users</label>
+          <%= f.text_field :search, value: @search, placeholder: "Name, Email, or Phone" %>
+        </div>
+
+        <div class="filter-group">
+          <label for="sort_by">Sort By</label>
+          <%= f.select :sort_by, options_for_select([
+            ['Name', 'full_name'],
+            ['Email', 'email_address'],
+            ['Joined Date', 'created_at'],
+            ['Total Spent', 'total_spent'],
+            ['Order Count', 'order_count'],
+            ['Average Order Value', 'average_order_value']
+          ], @sort_by), {}, { class: "filter-select" } %>
+        </div>
+
+        <div class="filter-group">
+          <label for="sort_direction">Direction</label>
+          <%= f.select :sort_direction, options_for_select([
+            ['Descending', 'desc'],
+            ['Ascending', 'asc']
+          ], @sort_direction), {}, { class: "filter-select" } %>
+        </div>
+
+        <div class="filter-actions">
+          <%= f.submit "Search", class: "btn btn-primary" %>
+          <%= link_to "Clear", admin_users_path, class: "btn btn-secondary" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Users Table -->
+  <div class="users-table-container">
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Orders</th>
+          <th>Total Spent</th>
+          <th>Avg Order Value</th>
+          <th>Joined</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @users.each do |user| %>
+          <tr>
+            <td>
+              <div class="user-info">
+                <div class="user-name"><%= user.name %></div>
+                <% if user.full_name.present? && user.full_name != user.name %>
+                  <div class="user-full-name"><%= user.full_name %></div>
+                <% end %>
+              </div>
+            </td>
+            <td><%= user.email_address %></td>
+            <td><%= user.phone || '-' %></td>
+            <td><%= user.order_count %></td>
+            <td>₹<%= number_with_delimiter(user.total_spent.to_i, delimiter: ',') %></td>
+            <td>₹<%= number_with_delimiter(user.average_order_value.to_i, delimiter: ',') %></td>
+            <td><%= user.created_at.strftime("%b %d, %Y") %></td>
+            <td class="actions">
+              <%= link_to "View Details", admin_user_path(user), class: "btn btn-sm btn-primary" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination-container">
+    <%= paginate @users %>
+  </div>
+
+  <% if @users.empty? %>
+    <div class="empty-state">
+      <p>No users found matching your criteria.</p>
+    </div>
+  <% end %>
+</div>

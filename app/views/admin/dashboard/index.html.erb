@@ -1,0 +1,161 @@
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h1>Seller Dashboard</h1>
+    <div class="time-range-selector">
+      <%= form_with url: admin_root_path, method: :get, data: { turbo_frame: "dashboard_content" } do |f| %>
+        <%= f.select :time_range, options_for_select([
+          ['Today', 'today'],
+          ['Last 7 Days', 'last_7_days'],
+          ['Last 30 Days', 'last_30_days'],
+          ['This Month', 'this_month'],
+          ['All Time', 'all_time']
+        ], @time_range), {}, { onchange: "this.form.requestSubmit()" } %>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Metric Cards -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-icon">💰</div>
+      <div class="metric-content">
+        <h3>Total Sales</h3>
+        <div class="metric-value">₹<%= number_with_delimiter(@metrics.total_sales.to_i, delimiter: ',') %></div>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-icon">📦</div>
+      <div class="metric-content">
+        <h3>Total Orders</h3>
+        <div class="metric-value"><%= number_with_delimiter(@metrics.total_orders) %></div>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-icon">📊</div>
+      <div class="metric-content">
+        <h3>Average Order Value</h3>
+        <div class="metric-value">₹<%= number_with_delimiter(@metrics.average_order_value.to_i, delimiter: ',') %></div>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-icon">👥</div>
+      <div class="metric-content">
+        <h3>Active Customers</h3>
+        <div class="metric-value"><%= number_with_delimiter(@metrics.active_customers) %></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="charts-row">
+    <div class="chart-container">
+      <h3>Sales Over Time</h3>
+      <canvas id="salesChart" width="400" height="200"></canvas>
+    </div>
+
+    <div class="chart-container">
+      <h3>Orders by Status</h3>
+      <canvas id="statusChart" width="400" height="200"></canvas>
+    </div>
+  </div>
+
+  <!-- Recent Orders -->
+  <div class="recent-orders-section">
+    <div class="section-header">
+      <h2>Recent Orders</h2>
+      <%= link_to "View All Orders", admin_orders_path, class: "btn btn-secondary" %>
+    </div>
+
+    <div class="orders-table-container">
+      <table class="orders-table">
+        <thead>
+          <tr>
+            <th>Order #</th>
+            <th>Customer</th>
+            <th>Date</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th>Payment</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @metrics.recent_orders.each do |order| %>
+            <tr>
+              <td><%= order.display_order_number %></td>
+              <td><%= order.user.name %></td>
+              <td><%= order.created_at.strftime("%b %d, %Y") %></td>
+              <td>₹<%= number_with_delimiter(order.total.to_i, delimiter: ',') %></td>
+              <td><span class="status-badge status-<%= order.status %>"><%= order.status.titleize %></span></td>
+              <td><span class="status-badge payment-<%= order.payment_status %>"><%= order.payment_status.titleize %></span></td>
+              <td><%= link_to "View", admin_order_path(order), class: "btn btn-sm btn-primary" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Sales Chart
+    const salesCtx = document.getElementById('salesChart').getContext('2d');
+    const salesData = <%= raw @metrics.sales_by_date.to_json %>;
+
+    new Chart(salesCtx, {
+      type: 'line',
+      data: {
+        labels: Object.keys(salesData).map(date => new Date(date).toLocaleDateString()),
+        datasets: [{
+          label: 'Sales',
+          data: Object.values(salesData),
+          borderColor: '#007bff',
+          backgroundColor: 'rgba(0, 123, 255, 0.1)',
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return '₹' + value.toLocaleString();
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Status Chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    const statusData = <%= raw @metrics.orders_by_status.to_json %>;
+
+    new Chart(statusCtx, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(statusData).map(status => status.charAt(0).toUpperCase() + status.slice(1)),
+        datasets: [{
+          data: Object.values(statusData),
+          backgroundColor: [
+            '#28a745', // paid
+            '#ffc107', // pending
+            '#007bff', // processing
+            '#17a2b8', // shipped
+            '#6c757d', // delivered
+            '#dc3545'  // cancelled
+          ]
+        }]
+      },
+      options: {
+        responsive: true
+      }
+    });
+  });
+</script>

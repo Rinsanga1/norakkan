@@ -1,0 +1,153 @@
+<div class="order-detail-container">
+  <div class="page-header">
+    <h1>Order <%= @order.display_order_number %></h1>
+    <div class="header-actions">
+      <%= link_to "← Back to Orders", admin_orders_path, class: "btn btn-secondary" %>
+      <%= link_to "Dashboard", admin_root_path, class: "btn btn-primary" %>
+    </div>
+  </div>
+
+  <div class="order-content">
+    <div class="order-main">
+      <!-- Order Status Update Form -->
+      <div class="status-update-section">
+        <h3>Order Status</h3>
+        <%= form_with model: @order, url: admin_order_path(@order), method: :patch,
+                      data: { turbo: true }, class: "status-form" do |f| %>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="order_status">Order Status</label>
+              <%= f.select :status, options_for_select([
+                ['Pending', 'pending'],
+                ['Paid', 'paid'],
+                ['Processing', 'processing'],
+                ['Shipped', 'shipped'],
+                ['Delivered', 'delivered'],
+                ['Cancelled', 'cancelled']
+              ], @order.status), {}, { class: "form-select" } %>
+            </div>
+
+            <div class="form-group">
+              <label for="order_payment_status">Payment Status</label>
+              <%= f.select :payment_status, options_for_select([
+                ['Unpaid', 'unpaid'],
+                ['Paid', 'paid'],
+                ['Failed', 'failed'],
+                ['Refunded', 'refunded']
+              ], @order.payment_status), {}, { class: "form-select" } %>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="order_notes">Notes</label>
+            <%= f.text_area :notes, class: "form-textarea", placeholder: "Add internal notes about this order..." %>
+          </div>
+
+          <%= f.submit "Update Order", class: "btn btn-primary" %>
+        <% end %>
+      </div>
+
+      <!-- Order Items -->
+      <div class="order-items-section">
+        <h3>Order Items</h3>
+        <div class="order-items">
+          <% @order_items.each do |item| %>
+            <div class="order-item">
+              <div class="item-image">
+                <% if item.product&.primary_image.present? %>
+                  <%= image_tag item.product.primary_image, alt: item.product.name, class: "product-thumbnail" %>
+                <% else %>
+                  <div class="no-image">No Image</div>
+                <% end %>
+              </div>
+              <div class="item-details">
+                <h4><%= item.product_name %></h4>
+                <% if item.variant_info.present? %>
+                  <p class="variant-info"><%= item.variant_info %></p>
+                <% end %>
+                <% if item.product&.sku.present? %>
+                  <p class="sku">SKU: <%= item.product.sku %></p>
+                <% end %>
+                <div class="item-meta">
+                  <span class="quantity">Qty: <%= item.quantity %></span>
+                  <span class="price">₹<%= number_with_delimiter(item.price.to_i, delimiter: ',') %></span>
+                  <span class="subtotal">₹<%= number_with_delimiter(item.subtotal.to_i, delimiter: ',') %></span>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="order-sidebar">
+      <!-- Order Summary -->
+      <div class="order-summary">
+        <h3>Order Summary</h3>
+        <div class="summary-row">
+          <span>Subtotal:</span>
+          <span>₹<%= number_with_delimiter(@order.subtotal.to_i, delimiter: ',') %></span>
+        </div>
+        <div class="summary-row">
+          <span>Shipping:</span>
+          <span>₹<%= number_with_delimiter(@order.shipping_cost.to_i, delimiter: ',') %></span>
+        </div>
+        <div class="summary-row total">
+          <span>Total:</span>
+          <span>₹<%= number_with_delimiter(@order.total.to_i, delimiter: ',') %></span>
+        </div>
+      </div>
+
+      <!-- Customer Information -->
+      <div class="customer-info">
+        <h3>Customer Information</h3>
+        <div class="customer-details">
+          <p><strong>Name:</strong> <%= @order.user.name %></p>
+          <p><strong>Email:</strong> <%= @order.user.email_address %></p>
+          <% if @order.user.phone.present? %>
+            <p><strong>Phone:</strong> <%= @order.user.phone %></p>
+          <% end %>
+          <p><strong>Orders:</strong> <%= @order.user.order_count %></p>
+          <p><strong>Total Spent:</strong> ₹<%= number_with_delimiter(@order.user.total_spent.to_i, delimiter: ',') %></p>
+        </div>
+        <%= link_to "View Customer Details", admin_user_path(@order.user), class: "btn btn-sm btn-secondary" %>
+      </div>
+
+      <!-- Shipping Address -->
+      <% if @order.shipping_address %>
+        <div class="shipping-address">
+          <h3>Shipping Address</h3>
+          <div class="address-details">
+            <p><%= @order.shipping_address.name %></p>
+            <p><%= @order.shipping_address.address_line_1 %></p>
+            <% if @order.shipping_address.address_line_2.present? %>
+              <p><%= @order.shipping_address.address_line_2 %></p>
+            <% end %>
+            <p><%= @order.shipping_address.city %>, <%= @order.shipping_address.state %> <%= @order.shipping_address.postal_code %></p>
+            <p><%= @order.shipping_address.country %></p>
+            <% if @order.shipping_address.phone.present? %>
+              <p><%= @order.shipping_address.phone %></p>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- Order Timeline -->
+      <div class="order-timeline">
+        <h3>Order Timeline</h3>
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-date"><%= @order.created_at.strftime("%b %d, %Y %H:%M") %></div>
+            <div class="timeline-event">Order placed</div>
+          </div>
+          <% if @order.status != 'pending' %>
+            <div class="timeline-item">
+              <div class="timeline-date"><%= @order.updated_at.strftime("%b %d, %Y %H:%M") %></div>
+              <div class="timeline-event">Status changed to <%= @order.status.titleize %></div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

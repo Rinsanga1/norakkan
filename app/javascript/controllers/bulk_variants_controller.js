@@ -58,38 +58,44 @@ export default class extends Controller {
       this.variantIndex++
     })
 
+    if (window.updateVariantCount) {
+      window.updateVariantCount()
+    }
+
     this.resetForm()
     this.showSuccessMessage(selectedGrinds.length)
   }
 
   createVariantHtml(size, grind, price, inventory) {
     const index = this.variantIndex
+    const variantCount = document.querySelectorAll('#variants-container .nested-fields').length + 1
+
     return `
       <div class="nested-fields" style="border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 5px; background: white;">
-        <h5>Variant: ${this.humanize(size)} - ${this.humanize(grind)}</h5>
+        <h5>Variant ${variantCount}: ${this.humanize(size)} - ${this.humanize(grind)}</h5>
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 15px; align-items: end;">
           <div>
-            <label>Size</label>
+            <label>Size *</label>
             <select name="product[variants_attributes][${index}][size]" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
               <option value="${size}" selected>${this.humanize(size)}</option>
             </select>
           </div>
           <div>
-            <label>Grind</label>
+            <label>Grind *</label>
             <select name="product[variants_attributes][${index}][grind]" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
               <option value="${grind}" selected>${this.humanize(grind)}</option>
             </select>
           </div>
           <div>
-            <label>Price</label>
+            <label>Price *</label>
             <input type="number" name="product[variants_attributes][${index}][price]" step="0.01" min="0" value="${price}" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
           </div>
           <div>
-            <label>Stock Quantity</label>
+            <label>Stock *</label>
             <input type="number" name="product[variants_attributes][${index}][inventory_quantity]" min="0" value="${inventory}" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
           </div>
           <div>
-            <button type="button" onclick="this.closest('.nested-fields').remove()" style="padding: 8px 15px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            <button type="button" onclick="this.closest('.nested-fields').remove(); if(window.updateVariantCount) window.updateVariantCount();" style="padding: 8px 15px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
               Remove
             </button>
           </div>
@@ -123,3 +129,4 @@ export default class extends Controller {
     return str.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
   }
 }
+
